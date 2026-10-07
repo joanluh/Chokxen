@@ -2,6 +2,11 @@ from datetime import datetime, timedelta
 from typing import Optional
 from jose import jwt
 from passlib.context import CryptContext
+from slowapi import Limiter
+from slowapi.util import get_remote_address
+
+
+limiter = Limiter(key_func=get_remote_address) #Para limitar la cantidad de peticiones permitidas
 
 secretKey = "ciscoNetacad"                    #Cambiar por una variable de entorno
 algorithm = "HS256"

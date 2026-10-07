@@ -1,14 +1,13 @@
 from fastapi import FastAPI, HTTPException, Header, Request
 from fastapi.middleware.cors import CORSMiddleware
-import uvicorn
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded 
-from routes import auth
+from routes import auth, usuarios
+from core.security import limiter
 
 chokxen = FastAPI()
 
-limiter = Limiter(key_func=get_remote_address)                                              #Definimos el limitardor en base a las IPs de los clientes
 chokxen.state.limiter = limiter                                                                 #Le decimos a la app que use el limitador
 chokxen.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)                  #Agregamos el manejador de excepciones para el límite de tasa
 
@@ -22,6 +21,4 @@ chokxen.add_middleware(
 )
 
 chokxen.include_router(auth.router, prefix="/api/v1/auth", tags=["Autenticación"])
-
-if __name__=="__main__":
-    uvicorn.run(chokxen,host="0.0.0.0",port=8080)
+chokxen.include_router(usuarios.router, prefix="/api/v1/usuarios", tags=["Usuarios"])

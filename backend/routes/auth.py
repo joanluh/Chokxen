@@ -1,10 +1,18 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Header
+from fastapi import APIRouter, Depends, HTTPException, status, Header, Request
 from fastapi.security import OAuth2PasswordRequestForm
 from datetime import timedelta
-from core.security import createAccessToken, createRefreshToken, verifyPassword, getPasswordHash, accessTokenExpireMinutes, secretKey, algorithm
+from core.security import createAccessToken, createRefreshToken, verifyPassword, getPasswordHash, accessTokenExpireMinutes, secretKey, algorithm, limiter
 from dependencies.auth import getCurrentUser
 from dependencies.roles import requirePremium, requireAdmin
 from jose import JWTError, jwt
+from pydantic import BaseModel
+
+class RegistroUsuario(BaseModel):
+    correo: str
+    password: str
+    nombreUsuario: str = "Usuario Nuevo"
+    rol: str = "Cliente"
+    plan: str = "Basico"
 
 router = APIRouter()
 
@@ -20,8 +28,51 @@ fakeDb = {
     }
 }
 
+def obtenerUsuarioPorCorreo(correo: str):
+    # Futuro: SELECT * FROM Clientes WHERE correo = correo
+    return fakeDb.get(correo)
+
+def guardarNuevoUsuario(correo: str, passwordHash: str, rol: str, plan: str):
+    fakeDb[correo] = {
+        "correo": correo,
+        "passwordHash": passwordHash,
+        "rol": rol,
+        "plan": plan
+    }
+    return fakeDb[correo]
+
+@router.post("/register", status_code=status.HTTP_201_CREATED)
+@limiter.limit("2/minute")
+def register(request: Request, nuevoUsuario: RegistroUsuario): # <-- ¡Aquí faltaba el request!
+    # Paso A: Consultar usando la función abstracta
+    usuarioExistente = obtenerUsuarioPorCorreo(nuevoUsuario.correo)
+    
+    if usuarioExistente:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="El correo ya está registrado"
+        )
+    
+    # Paso B: Cifrar la contraseña
+    nuevoPasswordHash = getPasswordHash(nuevoUsuario.password)
+    
+    # Paso C: Guardar usando la función abstracta
+    guardarNuevoUsuario(
+        correo=nuevoUsuario.correo,
+        passwordHash=nuevoPasswordHash,
+        rol=nuevoUsuario.rol,
+        plan=nuevoUsuario.plan
+    )
+    
+    return {
+        "mensaje": "Usuario registrado exitosamente",
+        "correo": nuevoUsuario.correo,
+        "plan": nuevoUsuario.plan
+    }
+
 @router.post("/login")
-def login(formData: OAuth2PasswordRequestForm = Depends()):
+@limiter.limit("5/minute")
+def login(request: Request, formData: OAuth2PasswordRequestForm = Depends()):
     user = fakeDb.get(formData.username)
     if not user or not verifyPassword(formData.password, user["passwordHash"]):
         raise HTTPException(
@@ -43,6 +94,7 @@ def login(formData: OAuth2PasswordRequestForm = Depends()):
         "refreshToken": refreshToken,
         "token_type": "bearer"
         }
+
 
 @router.post("/refresh")
 def refresh(refreshToken: str = Header(...)):
@@ -77,13 +129,3 @@ def logout(currentUser: dict=Depends(getCurrentUser)):
         "mensaje:": "Sesión cerreda exittosamente"
     }
 
-@router.get("/me")
-def getMyProfile(user: dict = Depends(getCurrentUser)):
-    return {
-        "mensaje": "Token validado correctamente", 
-        "usuario": user
-        }
-
-@router.get("/premium-only")
-def premiumFeature(user: dict = Depends(requirePremium)):
-    return {"mensaje": f"Bienvenido al área exclusiva, {user['correo']}"}
