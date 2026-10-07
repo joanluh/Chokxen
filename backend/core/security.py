@@ -24,3 +24,15 @@ def createAccessToken(data: dict, expiresDelta: Optional[timedelta] = None) -> s
     toEncode.update({"exp": expire})
     encodedJwt = jwt.encode(toEncode, secretKey, algorithm=algorithm)
     return encodedJwt
+
+refreshTokenExpireDays = 7
+
+def createRefreshToken(data: dict, expiresDelta: Optional[timedelta] = None) -> str:
+    toEncode = data.copy()
+    if expiresDelta:
+        expire = datetime.utcnow() + expiresDelta
+    else:
+        expire = datetime.utcnow() + timedelta(days=refreshTokenExpireDays)
+    toEncode.update({"exp": expire})
+    encodedJwt = jwt.encode(toEncode, secretKey, algorithm=algorithm)
+    return encodedJwt
