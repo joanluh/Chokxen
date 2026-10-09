@@ -8,4 +8,6 @@ dist/
 .idea/
 .vscode/
 *.log
-
+.env.*
+!.env.example
+/chokxen-demo.html

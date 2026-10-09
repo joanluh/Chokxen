@@ -1,0 +1,242 @@
+[
+  {
+    "file": "assets/logos/america.webp",
+    "source": "ESPN",
+    "download": "https://a.espncdn.com/i/teamlogos/soccer/500/227.png",
+    "label": "América",
+    "size": [
+      200,
+      200
+    ]
+  },
+  {
+    "file": "assets/logos/atlas.webp",
+    "source": "ESPN",
+    "download": "https://a.espncdn.com/i/teamlogos/soccer/500/216.png",
+    "label": "Atlas",
+    "size": [
+      200,
+      200
+    ]
+  },
+  {
+    "file": "assets/logos/cruz-azul.webp",
+    "source": "ESPN",
+    "download": "https://a.espncdn.com/i/teamlogos/soccer/500/218.png",
+    "label": "Cruz Azul",
+    "size": [
+      200,
+      200
+    ]
+  },
+  {
+    "file": "assets/logos/chivas.webp",
+    "source": "ESPN",
+    "download": "https://a.espncdn.com/i/teamlogos/soccer/500/219.png",
+    "label": "Chivas",
+    "size": [
+      200,
+      200
+    ]
+  },
+  {
+    "file": "assets/logos/leon.webp",
+    "source": "ESPN",
+    "download": "https://a.espncdn.com/i/teamlogos/soccer/500/228.png",
+    "label": "León",
+    "size": [
+      200,
+      200
+    ]
+  },
+  {
+    "file": "assets/logos/monterrey.webp",
+    "source": "ESPN",
+    "download": "https://a.espncdn.com/i/teamlogos/soccer/500/220.png",
+    "label": "Monterrey",
+    "size": [
+      200,
+      200
+    ]
+  },
+  {
+    "file": "assets/logos/pumas.webp",
+    "source": "ESPN",
+    "download": "https://a.espncdn.com/i/teamlogos/soccer/500/233.png",
+    "label": "Pumas",
+    "size": [
+      200,
+      200
+    ]
+  },
+  {
+    "file": "assets/logos/santos.webp",
+    "source": "ESPN",
+    "download": "https://a.espncdn.com/i/teamlogos/soccer/500/225.png",
+    "label": "Santos",
+    "size": [
+      200,
+      200
+    ]
+  },
+  {
+    "file": "assets/logos/tigres.webp",
+    "source": "ESPN",
+    "download": "https://a.espncdn.com/i/teamlogos/soccer/500/232.png",
+    "label": "Tigres",
+    "size": [
+      200,
+      200
+    ]
+  },
+  {
+    "file": "assets/logos/toluca.webp",
+    "source": "ESPN",
+    "download": "https://a.espncdn.com/i/teamlogos/soccer/500/223.png",
+    "label": "Toluca",
+    "size": [
+      200,
+      200
+    ]
+  },
+  {
+    "file": "assets/logos/barcelona.webp",
+    "source": "ESPN",
+    "download": "https://a.espncdn.com/i/teamlogos/soccer/500/83.png",
+    "label": "Barcelona",
+    "size": [
+      200,
+      200
+    ]
+  },
+  {
+    "file": "assets/logos/real-madrid.webp",
+    "source": "ESPN",
+    "download": "https://a.espncdn.com/i/teamlogos/soccer/500/86.png",
+    "label": "Real Madrid",
+    "size": [
+      200,
+      200
+    ]
+  },
+  {
+    "file": "assets/logos/cowboys.webp",
+    "source": "ESPN",
+    "download": "https://a.espncdn.com/i/teamlogos/nfl/500/dal.png",
+    "label": "Cowboys",
+    "size": [
+      200,
+      200
+    ]
+  },
+  {
+    "file": "assets/logos/chiefs.webp",
+    "source": "ESPN",
+    "download": "https://a.espncdn.com/i/teamlogos/nfl/500/kc.png",
+    "label": "Chiefs",
+    "size": [
+      200,
+      200
+    ]
+  },
+  {
+    "file": "assets/logos/celtics.webp",
+    "source": "ESPN",
+    "download": "https://a.espncdn.com/i/teamlogos/nba/500/bos.png",
+    "label": "Celtics",
+    "size": [
+      200,
+      200
+    ]
+  },
+  {
+    "file": "assets/logos/lakers.webp",
+    "source": "ESPN",
+    "download": "https://a.espncdn.com/i/teamlogos/nba/500/lal.png",
+    "label": "Lakers",
+    "size": [
+      200,
+      200
+    ]
+  },
+  {
+    "file": "assets/products/jersey-local.webp",
+    "source": "https://tiendachivas.com/products/jersey-chivas-local-stadium-ap26-hombre",
+    "download": "https://cdn.shopify.com/s/files/1/1005/8760/2215/files/3.png?v=1789480581",
+    "label": "JERSEY CHIVAS LOCAL STADIUM AP26 HOMBRE",
+    "size": [
+      750,
+      750
+    ]
+  },
+  {
+    "file": "assets/products/jersey-visitante.webp",
+    "source": "https://tiendachivas.com/products/jersey-chivas-visita-stadium-ap26-hombre",
+    "download": "https://cdn.shopify.com/s/files/1/1005/8760/2215/files/2_388a7d99-7cc5-4650-907a-51e23ee1a4d9.png?v=1789481172",
+    "label": "JERSEY CHIVAS VISITA STADIUM AP26 HOMBRE",
+    "size": [
+      750,
+      750
+    ]
+  },
+  {
+    "file": "assets/products/gorra.webp",
+    "source": "https://tiendachivas.com/products/new-era-gorra-chivas-de-guadalajara",
+    "download": "https://cdn.shopify.com/s/files/1/1005/8760/2215/files/1_c8062d64-8796-45d3-9d3b-bacd71dfea2b.png?v=1789426018",
+    "label": "NEW ERA GORRA CHIVAS DE GUADALAJARA",
+    "size": [
+      750,
+      750
+    ]
+  },
+  {
+    "file": "assets/products/mochila.webp",
+    "source": "https://tiendachivas.com/products/mochila-puma-chivas",
+    "download": "https://cdn.shopify.com/s/files/1/1005/8760/2215/files/1_62f42dbd-1668-4cac-a920-fe85a9dd7aa3.png?v=1789426011",
+    "label": "MOCHILA PUMA CHIVAS",
+    "size": [
+      750,
+      750
+    ]
+  },
+  {
+    "file": "assets/products/sudadera.webp",
+    "source": "https://tiendachivas.com/products/sudadera-chivas-negra-escudo-al-frente-y-en-mangas",
+    "download": "https://cdn.shopify.com/s/files/1/1005/8760/2215/files/1_5704e3e9-c524-479b-89ea-613f661ec516.png?v=1789426019",
+    "label": "SUDADERA CHIVAS NEGRA ESCUDO AL FRENTE Y EN MANGAS",
+    "size": [
+      750,
+      750
+    ]
+  },
+  {
+    "file": "assets/photos/stadium.webp",
+    "source": "https://unsplash.com/photos/r-xKieMqL34",
+    "download": "https://images.unsplash.com/photo-1522778119026-d647f0596c20?auto=format&fit=crop&w=1600&q=85",
+    "label": "Estadio de fútbol / Thomas Serer",
+    "size": [
+      1600,
+      1067
+    ]
+  },
+  {
+    "file": "assets/photos/football.webp",
+    "source": "https://unsplash.com/photos/dKCKiC0BQtU",
+    "download": "https://images.unsplash.com/photo-1575361204480-aadea25e6e68?auto=format&fit=crop&w=1000&q=85",
+    "label": "Balón sobre césped / Wesley Tingey",
+    "size": [
+      1000,
+      667
+    ]
+  },
+  {
+    "file": "assets/photos/chivas-editorial.webp",
+    "source": "https://tiendachivas.com/products/jersey-chivas-local-stadium-ap26-hombre",
+    "download": "https://cdn.shopify.com/s/files/1/1005/8760/2215/files/1.png?v=1789480581",
+    "label": "JERSEY CHIVAS LOCAL STADIUM AP26 HOMBRE",
+    "size": [
+      750,
+      750
+    ]
+  }
+]
