@@ -12,6 +12,10 @@ def getMyProfile(user: dict = Depends(getCurrentUser)):
         "usuario": user
         }
 
+""" """ 
 @router.get("/premium-only")
 def premiumFeature(user: dict = Depends(requirePremium)):
-    return {"mensaje": f"Bienvenido al área exclusiva, {user['correo']}"}
+    return {
+        "mensaje": f"Bienvenido al área exclusiva, {user['correo']}"
+        }
+""" """ 

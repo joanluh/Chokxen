@@ -5,17 +5,21 @@ from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded 
 from routes import auth, usuarios
 from core.security import limiter
+from database.connection import engine, Base
+from database.models import clientes
 
 chokxen = FastAPI()
 
 chokxen.state.limiter = limiter                                                                 #Le decimos a la app que use el limitador
 chokxen.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)                  #Agregamos el manejador de excepciones para el límite de tasa
 
+Base.metadata.create_all(bind=engine)
+
 #Usamos la funcionalidad de middleware para limitir el tipo de solicitudes que se pueden realizar a nuestra API
 chokxen.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],                                                                    #permite solicitudes desde cualquier origen
-    ##allow_credentials=True,                                                                 #permite el uso de cookies y credenciales en las solicitudes
+    allow_credentials=True,                                                                 #permite el uso de cookies y credenciales en las solicitudes
     allow_methods=["GET", "POST", "PATCH", "DELETE", "OPTIONS"],                                                                    #Limita los metodos aceptados a OPTIONS Y POST
     allow_headers=["Content-Type", "Chokxen-SPORT", "Authorization"],                                        #Definimos el encabezado de seguridad
 )
