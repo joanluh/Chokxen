@@ -14,11 +14,16 @@ def getCurrentUser(token: str = Depends(oauth2Scheme)):
     try:
         payload = jwt.decode(token, secretKey, algorithms=[algorithm])
         correo: str = payload.get("sub")
+        id: int =payload.get("id")
         rol: str = payload.get("rol")
         plan: str = payload.get("plan")
         if correo is None:
             raise credentialsException
-        tokenData = {"correo": correo, "rol": rol, "plan": plan}
+        tokenData = {
+            "correo": correo,
+            "id": id, 
+            "rol": rol,
+            "plan": plan}
         return tokenData
     except JWTError:
         raise credentialsException

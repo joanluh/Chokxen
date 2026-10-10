@@ -27,10 +27,8 @@ def register(request: Request, nuevoUsuario: RegistroUsuario, db: Session = Depe
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="El correo ya está registrado"
         )
-    
     nuevoPasswordHash = getPasswordHash(nuevoUsuario.password)
     
-    # Guardamos usando la capa de repositorio
     guardarNuevoUsuario(
         correo=nuevoUsuario.correo,
         passwordHash=nuevoPasswordHash,
@@ -49,7 +47,6 @@ def register(request: Request, nuevoUsuario: RegistroUsuario, db: Session = Depe
 @router.post("/login")
 @limiter.limit("5/minute")
 def login(request: Request, formData: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
-    # Buscamos usando el repositorio
     user = obtenerUsuarioPorCorreo(formData.username, db)
     
     if not user or not verifyPassword(formData.password, user.passwordHash):
@@ -60,8 +57,12 @@ def login(request: Request, formData: OAuth2PasswordRequestForm = Depends(), db:
     
     expires = timedelta(minutes=accessTokenExpireMinutes)
     token = createAccessToken(
-        data={"sub": user.correo, "rol": user.rol, "plan": user.plan},
-        expiresDelta=expires
+    data={
+        "sub": user.correo, 
+        "id": user.clienteId, 
+        "rol": user.rol, 
+        "plan": user.plan},
+    expiresDelta=expires
     )
     refreshToken = createRefreshToken(
         data={"sub": user.correo}
