@@ -7,5 +7,6 @@ load_dotenv()
 
 DATABASE_URL = os.getenv(
     "DATABASE_URL", 
-    "mysql+pymysql://root:@127.0.0.1:3306/chokxen" # Valor por defecto para XAMPP
+    "mysql+pymysql://chokxen_user:chokxen_password@db:3306/chokxen"
+
 )

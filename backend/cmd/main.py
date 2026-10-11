@@ -6,8 +6,6 @@ from slowapi.errors import RateLimitExceeded
 from routes import auth, usuarios, favoritos
 from core.security import limiter
 from database.connection import engine, Base
-
-# FIX 1: Agregamos "as modelo_favoritos" para evitar que sobreescriba el módulo de "routes"
 from database.models import clientes, liga, equipo, favoritos as modelo_favoritos
 
 chokxen = FastAPI()
@@ -15,7 +13,7 @@ chokxen = FastAPI()
 chokxen.state.limiter = limiter                                                       
 chokxen.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)                  
 
-Base.metadata.create_all(bind=engine)
+#Base.metadata.create_all(bind=engine)
 
 chokxen.add_middleware(
     CORSMiddleware,

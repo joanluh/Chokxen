@@ -12,15 +12,7 @@ services:
       - "3306:3306"
     volumes:
       - mysql_data:/var/lib/mysql
-    networks:
-      - chokxen-net
-
-  redis:
-    image: redis:7-alpine
-    container_name: chokxen_redis
-    restart: always
-    ports:
-      - "6379:6379"
+      - ./backend/database/init:/docker-entrypoint-initdb.d
     networks:
       - chokxen-net
 
@@ -29,13 +21,13 @@ services:
     container_name: chokxen_backend
     restart: always
     ports:
-      - "8000:8000"
+      - "8080:8080"
     environment:
-      - DATABASE_URL=mysql+pymysql://chokxen_user:chokxen_password@db:3306/chokxen_db
-      - REDIS_URL=redis://redis:6379/0
+      - DATABASE_URL=mysql+pymysql://chokxen_user:chokxen_password@db:3306/chokxen
     depends_on:
       - db
-      - redis
+    volumes:
+      - ./backend:/app
     networks:
       - chokxen-net
 
