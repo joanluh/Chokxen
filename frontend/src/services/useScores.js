@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { fetchScores } from './espn.js';
-export const usesEspn = !globalThis.__CHOKXEN_OFFLINE__ && import.meta.env.VITE_SPORTS_MODE !== 'demo';
+export const usesEspn = true;
 export function useScores({ enabled, sport, league, day }) {
   const [state, setState] = useState({ matches: [], loading: true, error: '', notice: '', updated: null });
   const [revision, setRevision] = useState(0);

@@ -52,7 +52,9 @@ export function createLibraryClient(authorized) {
   const search = async query => {
     const value = query.trim();
     if (value.length < 3) return { ligas: [], equipos: [], jugadores: [] };
-    return authorized(`/busqueda/?q=${encodeURIComponent(value)}`);
+    const body = await authorized(`/busqueda/?q=${encodeURIComponent(value)}`);
+    if (!body || !['ligas', 'equipos', 'jugadores'].every(key => Array.isArray(body[key]))) throw new Error('El servidor devolvió una búsqueda inválida.');
+    return body;
   };
   const detail = (kind, id) => {
     const path = { league: 'competiciones', team: 'equipos', player: 'jugadores' }[kind];
