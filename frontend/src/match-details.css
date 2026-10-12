@@ -1,0 +1,18 @@
+.match-detail-score .team-badge { width:28px; height:28px; min-width:28px; font-size:10px; }
+.match-detail-score .team-badge img { width:100%; height:100%; object-fit:contain; }
+.match-detail-score { display:grid; gap:12px; margin:22px 0 8px; padding:16px; border:1px solid var(--border); border-radius:10px; background:var(--surface2); }
+.match-detail-score > div { display:grid; grid-template-columns:28px minmax(0,1fr) 30px; gap:12px; align-items:center; }
+.match-detail-score strong { font-size:14px; line-height:1.4; overflow-wrap:anywhere; }
+.match-detail-score > div > span:last-child { font-size:23px; font-weight:700; text-align:center; font-variant-numeric:tabular-nums; }
+.match-summary-content { margin-top:12px; }
+.scorers-section,.statistics-section { padding-top:16px; margin-top:16px; }
+.scorers-section h3,.statistics-section h3 { font-size:14px; margin-bottom:12px; }
+.compact-goals { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px 16px; padding:0; margin:0; list-style:none; }
+.compact-goals li { display:grid; grid-template-columns:42px minmax(0,1fr); align-items:start; gap:8px; padding:6px 0; }
+.compact-goals li > span { color:var(--muted); font-size:12px; font-variant-numeric:tabular-nums; }
+.compact-goals strong { display:block; font-size:12px; font-weight:500; overflow-wrap:anywhere; }
+.compact-goals small { display:block; font-size:10px; color:var(--muted); margin-top:3px; overflow-wrap:anywhere; }
+.match-statistics > div { padding:8px 4px; grid-template-columns:65px minmax(0,1fr) 65px; }
+.match-statistics dd { font-size:13px; }
+.match-statistics dt { font-size:12px; }
+@media(max-width:760px) { .compact-goals { grid-template-columns:minmax(0,1fr); gap:2px; } .compact-goals li { grid-template-columns:48px minmax(0,1fr); } }
