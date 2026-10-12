@@ -24,18 +24,19 @@ export function createAuthClient({ baseUrl, fetcher = fetch, storage, onExpired 
   }
   async function send(path, options = {}) {
     let response;
-    try { response = await fetcher(`${baseUrl.replace(/\/$/, '')}${path}`, { ...options, headers: { ...options.headers, Heart: 'CHOKXEN SPORT' }, signal: AbortSignal.timeout(12000) }); }
+    try { response = await fetcher(`${baseUrl.replace(/\/$/, '')}${path}`, { ...options, headers: { ...options.headers, Heart: 'CHOKXEN SPORT', 'Chokxen-SPORT': 'true' }, signal: AbortSignal.timeout(12000) }); }
     catch { throw new Error('No pudimos conectar con el servidor. Comprueba la conexión e inténtalo de nuevo.'); }
     const body = await response.json().catch(() => ({}));
     if (!response.ok) {
       let message = 'No se pudo completar la solicitud. Inténtalo de nuevo.';
+      if (response.status >= 500) message = 'El servidor no está disponible. Comprueba que el backend esté encendido e inténtalo de nuevo.';
       if (response.status === 401) message = path === '/auth/login' ? 'Correo o contraseña incorrectos.' : 'Tu sesión terminó. Inicia sesión de nuevo.';
       else if (response.status === 409 && path === '/auth/register') message = 'Este correo ya está registrado. Inicia sesión con tu cuenta.';
       else if (response.status === 422 && Array.isArray(body?.detail)) {
         const labels = { correo: 'correo', username: 'correo', password: 'contraseña', nombreUsuario: 'nombre', plan: 'plan' };
         const fields = [...new Set(body.detail.map(item => labels[item.loc?.at(-1)]).filter(Boolean))];
         message = fields.length ? `Revisa estos campos: ${fields.join(', ')}.` : 'Revisa los datos del formulario.';
-      } else if (typeof body?.detail === 'string') message = body.detail;
+      } else if (response.status < 500 && typeof body?.detail === 'string') message = body.detail;
       const error = new Error(message); error.status = response.status; throw error;
     }
     return body;
@@ -70,12 +71,13 @@ export function createAuthClient({ baseUrl, fetcher = fetch, storage, onExpired 
     }
   }
   async function profile() {
-    const body = await authorized('/usuarios/me');
+    const response = await authorized('/usuarios/me');
+    const body = response?.usuario ?? response;
     const email = body?.correo ?? body?.email;
     if (typeof email !== 'string' || !email) throw new Error('El perfil recibido no incluye el correo. Revisa el contrato de respuestas.');
     const role = body.rol ?? body.role;
     return {
-      email, name: [body.nombreUsuario, body.name].find(value => typeof value === 'string' && value.trim()) || email.split('@')[0],
+      id: body.id ?? body.clienteId, email, name: [body.nombreUsuario, body.name].find(value => typeof value === 'string' && value.trim()) || email.split('@')[0],
       role: role === 'Administrador' ? role : 'Cliente',
       plan: body.plan === 'Premium' ? 'Premium' : 'Basico', onboarded: false,
     };

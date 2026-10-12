@@ -1,5 +1,6 @@
 import { createAuthClient } from './auth-client.js';
 import { createAuthService } from './auth-service.js';
+import { createLibraryClient } from './library-client.js';
 const mode = globalThis.__CHOKXEN_OFFLINE__ ? 'demo' : import.meta.env.VITE_DATA_MODE || 'api';
 const apiUrl = (import.meta.env.VITE_API_URL || '/api/v1').replace(/\/$/, '');
 export const isDemo = mode !== 'api';
@@ -7,6 +8,7 @@ export const demoEnabled = isDemo || import.meta.env.VITE_ENABLE_DEMO !== 'false
 let storage;
 try { storage = globalThis.sessionStorage; } catch { /* Almacenamiento opcional. */ }
 const apiClient = createAuthClient({ baseUrl: apiUrl, storage, onExpired: () => window.dispatchEvent(new Event('chokxen:session-expired')) });
+export const libraryClient = createLibraryClient(apiClient.authorized);
 const auth = createAuthService({ apiClient, mode: isDemo ? 'demo' : 'api', demoEnabled, storage });
 export const login = auth.login;
 export const register = auth.register;
