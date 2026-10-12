@@ -14,8 +14,7 @@
 
     <script type="text/babel">
         const { useState, useEffect, createContext, useContext } = React;
-        // Servir con Vite: el proxy /api conecta con el mismo backend que React.
-        const apiBase = '';
+        const apiBase = 'http://0.0.0.0:8080';
 
         const AuthContext = createContext(null);
         const useAuth = () => useContext(AuthContext);
@@ -23,7 +22,6 @@
         const apiFetch = async (endpoint, options = {}) => {
             const headers = options.headers || {};
             headers['Chokxen-SPORT'] = 'true';
-            headers['Heart'] = 'CHOKXEN SPORT';
 
             if (!options.skipAuth) {
                 const token = localStorage.getItem('chokxenAccessToken');
@@ -39,7 +37,7 @@
                     try {
                         const refreshRes = await fetch(`${apiBase}/api/v1/auth/refresh`, {
                             method: 'POST',
-                            headers: { 'Chokxen-SPORT': 'true', 'Heart': 'CHOKXEN SPORT', 'refreshToken': refToken }
+                            headers: { 'Chokxen-SPORT': 'true', 'refreshToken': refToken }
                         });
                         if (refreshRes.ok) {
                             const data = await refreshRes.json();
@@ -133,17 +131,16 @@
                 }
                 try {
                     const profile = await apiFetch('/api/v1/usuarios/me');
-                    setUser(profile.usuario || profile);
+                    setUser(profile);
                 } catch (e) {
-                    await handleLogout();
-                    throw e;
+                    handleLogout();
                 } finally {
                     setLoading(false);
                 }
             };
 
             useEffect(() => {
-                if (token) fetchMe(token).catch(() => {});
+                if (token) fetchMe(token);
                 else setLoading(false);
             }, []);
 

@@ -7,8 +7,5 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-RUN useradd --create-home appuser
-USER appuser
-
 EXPOSE 8080
-CMD ["uvicorn", "cmd.main:chokxen", "--host", "0.0.0.0", "--port", "8080", "--workers", "1"]
+CMD ["uvicorn", "cmd.main:chokxen", "--host", "0.0.0.0", "--port", "8080", "--reload"]

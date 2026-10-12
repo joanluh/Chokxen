@@ -1,7 +1,5 @@
 node_modules
 dist
-.env
-.env.*
-*.log
-*.zip
 .git
+.env.local
+*.log

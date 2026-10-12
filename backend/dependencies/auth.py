@@ -17,13 +17,12 @@ def getCurrentUser(token: str = Depends(oauth2Scheme)):
         id: int =payload.get("id")
         rol: str = payload.get("rol")
         plan: str = payload.get("plan")
-        if correo is None or id is None or payload.get("token_type", "access") != "access":
+        if correo is None:
             raise credentialsException
         tokenData = {
             "correo": correo,
             "id": id, 
             "rol": rol,
-            "nombreUsuario": payload.get("nombreUsuario"),
             "plan": plan}
         return tokenData
     except JWTError:

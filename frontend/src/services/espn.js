@@ -36,8 +36,7 @@ export function normalizeScoreboard(body, feed, day, target) {
     const label = final ? 'Finalizado' : live ? 'En vivo' : upcoming ? 'Próximo' : 'Sin confirmar';
     const scores = [home.score, away.score].map(score => score === '' || score == null ? null : Number(score));
     return [{
-      id: `espn:${event.id}`, sport: feed.sport, league: feed.league, source: 'ESPN', day, sportPath: feed.path,
-      teamIds: [String(home.team.id ?? home.id), String(away.team.id ?? away.id)],
+      id: `espn:${event.id}`, sport: feed.sport, league: feed.league, source: 'ESPN', day,
       home: home.team.shortDisplayName || home.team.displayName,
       away: away.team.shortDisplayName || away.team.displayName,
       logos: [safeLogo(home.team.logo), safeLogo(away.team.logo)],
