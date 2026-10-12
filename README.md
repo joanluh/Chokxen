@@ -1,35 +1,18 @@
 # Chokxen Sport
 
-Plataforma deportiva con frontend React, perfiles de demostración y consulta de resultados ESPN.
+Se restaura el backend y la infraestructura de la versión `dffff4f3ec910427f2299e4f2b7b78b9cb4c5b63` (anterior a la integración de histórico). El Compose raíz vuelve a contener únicamente los servicios originales de MySQL y FastAPI. El frontend tiene su propio Compose independiente.
 
-## Estructura
-
-```text
-backend/     Infraestructura Python del backend
-database/    Modelos, repositorios, inicialización y seeders
-frontend/    Aplicación React, estilos, recursos, contrato API y pruebas
-docs/        Documentación del proyecto
-```
-
-## Ejecutar el frontend
-
-Requiere Node.js 22.12 o superior.
+## Levantar solo la SPA
 
 ```sh
 cd frontend
-npm ci --ignore-scripts
-npm run dev
+docker compose up -d --build
 ```
 
-Abre la dirección local que muestre Vite. Los botones **Básico**, **Premium** y **Administrador** permiten explorar la demo sin servidor. El formulario de login/registro usa el backend configurado en `frontend/.env.example`; la conexión a ese backend requiere Tailscale.
+Abre http://localhost:5173. No necesita un backend encendido para mostrar la interfaz y probar Básico, Premium y Administrador. Para cuentas reales configura `BACKEND_URL` del contenedor existente de Daniel en `frontend/.env`. No necesitas instalar Node ni iniciar Vite en la computadora.
 
-Inicio y Resultados separan los datos reales de ESPN de los encuentros ficticios de los perfiles demo. Créditos, apuestas, tienda, pedidos, administración y predicciones son simulaciones. El onboarding guarda preferencias localmente mientras falta su endpoint.
+Consulta [frontend/README.md](frontend/README.md) para Docker, configuración de VPN y diagnóstico, y [frontend/API.md](frontend/API.md) para el contrato.
 
-```sh
-npm test
-npm run build
-```
+El backend conserva su Dockerfile, dependencias, rutas y Compose originales sin modificaciones. La SPA mantiene diseño móvil, login/registro, perfil, onboarding con favoritos existentes y consulta ESPN. Se retira la dependencia de las nuevas rutas de histórico; tienda, apuestas y predicciones siguen como demostración.
 
-Consulta [la guía de frontend](docs/frontend.md), [su README](frontend/README.md) y [la conexión API](frontend/API.md).
-
-El repositorio contiene el código fuente y sus recursos. Dependencias instaladas, compilaciones, configuraciones locales y paquetes ZIP no forman parte de esta integración.
+Validación: 50 pruebas del frontend y compilación aprobadas. La ejecución de los contenedores requiere verificar Docker en el equipo de despliegue; actualizar el repositorio no modifica el servidor remoto ni su base de datos.
