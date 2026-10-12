@@ -304,3 +304,37 @@
   .onboard-header > .button { width: 100%; }
   .onboard-session { font-size: 12px; }
 }
+
+.onboarding-fields { border: 0; padding: 0; margin: 0; min-width: 0; }
+.library-panel { margin-top: 28px; }
+.catalog-columns { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; }
+.catalog-columns ul { list-style: none; padding: 0; max-height: 280px; overflow-y: auto; }
+.catalog-columns li .text-button { display: flex; justify-content: space-between; gap: 8px; width: 100%; text-align: left; padding: 10px 0; min-height: 44px; }
+.catalog-columns li svg { flex-shrink: 0; }
+.catalog-detail { margin: 16px 0; padding: 16px; background: var(--surface2); border-radius: 10px; }
+.catalog-detail dl > div { display: grid; grid-template-columns: minmax(100px, 1fr) 2fr; gap: 12px; margin: 10px 0; }
+.catalog-detail dd { margin: 0; overflow-wrap: anywhere; }
+@media (max-width: 760px) { .catalog-columns { grid-template-columns: minmax(0, 1fr); } .catalog-columns ul { max-height: 220px; } }
+
+.match-summary-content { margin-top: 20px; }
+.scorers-section, .statistics-section { padding-top: 20px; margin-top: 20px; border-top: 1px solid var(--border); }
+.scorers-section h3, .statistics-section h3 { margin: 0 0 16px; font-size: 17px; }
+.goal-list { padding: 0; margin: 0; list-style: none; }
+.goal-list li { display: grid; grid-template-columns: 72px minmax(0, 1fr) 20px; gap: 12px; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--border); }
+.goal-list li:last-child { border-bottom: 0; }
+.goal-minute { color: #ff8097; font-size: 14px; font-weight: 700; }
+.goal-list strong { font-size: 14px; display: block; overflow-wrap: anywhere; }
+.goal-list small { color: var(--muted); display: block; font-size: 12px; margin-top: 4px; overflow-wrap: anywhere; }
+.stats-team-heading { display: grid; grid-template-columns: minmax(0, 1fr) 30px minmax(0, 1fr); align-items: center; gap: 8px; padding: 12px; border-radius: 8px; background: var(--surface2); text-align: center; font-size: 12px; margin-bottom: 8px; }
+.stats-team-heading strong { overflow-wrap: anywhere; }
+.stats-team-heading > span { color: var(--muted); }
+.match-statistics { margin: 0 0 20px; }
+.match-statistics > div { display: grid; grid-template-columns: 76px minmax(0, 1fr) 76px; gap: 8px; align-items: center; padding: 12px 8px; border-bottom: 1px solid var(--border); }
+.match-statistics dd { margin: 0; text-align: center; font-size: 15px; font-weight: 700; overflow-wrap: anywhere; }
+.match-statistics dt { text-align: center; color: var(--muted); font-size: 13px; }
+@media (max-width: 420px) {
+  .goal-list li { grid-template-columns: 60px minmax(0, 1fr) 18px; gap: 8px; }
+  .goal-minute { font-size: 12px; }
+  .match-statistics > div { grid-template-columns: 58px minmax(0, 1fr) 58px; padding: 12px 0; }
+  .match-statistics dt { font-size: 12px; }
+}
