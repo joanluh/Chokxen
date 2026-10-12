@@ -33,8 +33,12 @@ test('nombres ajenos al catálogo no generan peticiones ni favoritos con ID inve
   await assert.rejects(client.save({teams:['otro']},catalog),/Actualiza el catálogo/);
 });
 test('búsqueda respeta mínimo, codifica la consulta y usa las rutas de detalle actuales', async () => {
-  const paths=[]; const client=createLibraryClient(async path=>{paths.push(path);return {};});
+  const paths=[]; const client=createLibraryClient(async path=>{paths.push(path);return {ligas:[],equipos:[],jugadores:[]};});
   await client.search('ab'); assert.equal(paths.length,0);
   await client.search('América & Liga'); await client.detail('team',40); await client.detail('league',7); await client.detail('player',90);
   assert.deepEqual(paths,['/busqueda/?q=Am%C3%A9rica%20%26%20Liga','/equipos/40','/competiciones/7','/jugadores/90']);
+});
+test('una búsqueda inválida se informa como error y no como cero coincidencias', async () => {
+  const client = createLibraryClient(async () => ({}));
+  await assert.rejects(client.search('cesar'), /búsqueda inválida/);
 });
