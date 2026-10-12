@@ -1,5 +1,4 @@
-// El exportador de la demo incrusta estos archivos para funcionar sin conexión.
-export const asset = file => globalThis.__CHOKXEN_ASSETS__?.[file] || `${import.meta.env.BASE_URL}${file}`;
+export const asset = file => `${import.meta.env.BASE_URL}${file}`;
 
 export const teamLogos = Object.fromEntries([
   ['América', 'america'], ['Chivas', 'chivas'], ['Monterrey', 'monterrey'],
