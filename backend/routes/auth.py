@@ -32,8 +32,8 @@ def register(request: Request, nuevoUsuario: RegistroUsuario, db: Session = Depe
     guardarNuevoUsuario(
         correo=nuevoUsuario.correo,
         passwordHash=nuevoPasswordHash,
-        rol=nuevoUsuario.rol,
-        plan=nuevoUsuario.plan,
+        rol="Cliente",
+        plan="Premium" if nuevoUsuario.plan == "Premium" else "Basico",
         nombreUsuario=nuevoUsuario.nombreUsuario,
         db=db
     )
@@ -61,7 +61,7 @@ def login(request: Request, formData: OAuth2PasswordRequestForm = Depends(), db:
         "sub": user.correo, 
         "id": user.clienteId, 
         "rol": user.rol, 
-        "plan": user.plan},
+        "plan": user.plan, "nombreUsuario": user.nombreUsuario},
     expiresDelta=expires
     )
     refreshToken = createRefreshToken(
@@ -84,7 +84,7 @@ def refresh(refreshToken: str = Header(...), db: Session = Depends(get_db)):
     try:
         payload = jwt.decode(refreshToken, secretKey, algorithms=[algorithm])
         correo: str = payload.get("sub")
-        if correo is None:
+        if correo is None or payload.get("token_type") != "refresh":
             raise credentialsException
         
         user = obtenerUsuarioPorCorreo(correo, db)
@@ -93,7 +93,7 @@ def refresh(refreshToken: str = Header(...), db: Session = Depends(get_db)):
         
         accessExpires = timedelta(minutes=accessTokenExpireMinutes)
         newAccessToken = createAccessToken(
-            data={"sub": user.correo, "rol": user.rol, "plan": user.plan},
+            data={"sub": user.correo, "id": user.clienteId, "rol": user.rol, "plan": user.plan, "nombreUsuario": user.nombreUsuario},
             expiresDelta=accessExpires
         )
         return {
