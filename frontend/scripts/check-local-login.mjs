@@ -1,0 +1,32 @@
+import assert from 'node:assert/strict';
+import { createAuthClient } from '../src/services/auth-client.js';
+import { createLibraryClient } from '../src/services/library-client.js';
+
+// Solo se permite la base aislada de scripts/local_check.py.
+const mode = await fetch('http://127.0.0.1:8080/__local_check__').then(response => response.json());
+assert.equal(mode.mode, 'local-check');
+const saved = new Map();
+const storage = { getItem: key => saved.get(key), setItem: (key, value) => saved.set(key, value), removeItem: key => saved.delete(key) };
+const baseUrl = 'http://127.0.0.1:5173/api/v1';
+const client = createAuthClient({ baseUrl, storage });
+await assert.rejects(client.login('local@example.test', 'incorrecta'), /Correo o contraseña/);
+const name = `Comprobación ${Date.now()}`;
+const email = `check-${Date.now()}@example.test`;
+const user = await client.register({ name, email, password: 'PruebaLogin123!', plan: 'Premium' });
+assert.equal(user.email, email); assert.ok(user.id); assert.equal(user.name, name);
+assert.equal((await client.restore()).email, email);
+const tokens = JSON.parse(saved.get('chokxen:session'));
+storage.setItem('chokxen:session', JSON.stringify({ ...tokens, accessToken: 'expired-for-local-test' }));
+const restored = createAuthClient({ baseUrl, storage });
+assert.equal((await restored.restore()).id, user.id);
+const library = createLibraryClient(restored.authorized);
+const data = await library.load();
+assert.ok(data.leagues.length && data.teams.length && data.players.length);
+const next = { teams: [data.teams[0].nombreEquipo], leagues: [data.leagues[0].nombreLiga], players: [`${data.players[0].nombreJugador} ${data.players[0].apellido}`] };
+const updated = await library.save(next, data);
+assert.equal(updated.records.length, 3);
+assert.deepEqual(library.preferences(updated).teams, next.teams);
+assert.equal((await library.search('América')).equipos.length, 1);
+assert.equal((await library.detail('team', data.teams[0].equipoId)).nombreEquipo, next.teams[0]);
+await restored.logout(); assert.equal(saved.size, 0);
+console.log('PASS: registro, contraseña incorrecta, login, perfil anidado, restauración, refresh con ID, catálogos, favoritos, búsqueda, detalle y logout a través del proxy frontend y FastAPI real.');
