@@ -117,3 +117,16 @@ test('Heart se mantiene fijo junto al Bearer en rutas protegidas del contrato', 
   assert.equal(headers.Heart, 'CHOKXEN SPORT'); assert.equal(headers.Authorization, 'Bearer access');
   assert.equal(headers.Accept, 'application/json');
 });
+
+test('perfil real envuelto en usuario y tokens mixtos conservan la cuenta y su ID', async () => {
+  const context = setup(path => path.endsWith('/login') ? json({ access_token: 'access', refreshToken: 'refresh' }) : json({ mensaje: 'Perfil del usuario', usuario: { id: 17, correo: me.correo, rol: 'Cliente', plan: 'Premium' } }));
+  const user = await context.client.login(me.correo, 'Secret123!');
+  assert.equal(user.id, 17); assert.equal(user.email, me.correo); assert.equal(user.plan, 'Premium');
+  assert.equal(context.calls[0].options.headers['Chokxen-SPORT'], 'true');
+  assert.equal(JSON.parse(context.saved.get('chokxen:session')).refreshToken, 'refresh');
+});
+
+test('un fallo interno no muestra detalles SQL ni datos sensibles de la respuesta', async () => {
+  const context = setup(() => json({ detail: 'INSERT passwordHash internal-data' }, 500));
+  await assert.rejects(context.client.login(me.correo, 'Secret123!'), error => error.message.includes('servidor no está disponible') && !error.message.includes('passwordHash'));
+});
