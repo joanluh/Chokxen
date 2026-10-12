@@ -1,0 +1,24 @@
+server {
+    listen 80;
+    server_name _;
+    root /usr/share/nginx/html;
+    index index.html;
+    # DNS interno de Docker. La API se resuelve al pedirla, no al iniciar Nginx.
+    resolver 127.0.0.11 valid=30s ipv6=off;
+    resolver_timeout 5s;
+    set $api_origin "${BACKEND_URL}";
+    location /api/ {
+        proxy_pass $api_origin$request_uri;
+        proxy_redirect off;
+        proxy_connect_timeout 5s;
+        proxy_read_timeout 30s;
+        proxy_set_header Host $proxy_host;
+        proxy_set_header X-Forwarded-Host $host;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    }
+    location = /health { return 200 'ok'; add_header Content-Type text/plain; }
+    location = /index.html { add_header Cache-Control "no-cache"; }
+    location / { try_files $uri $uri/ /index.html; }
+    location /assets/ { expires 7d; try_files $uri =404; }
+}
