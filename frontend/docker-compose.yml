@@ -1,0 +1,21 @@
+name: chokxen-frontend
+
+services:
+  frontend:
+    build:
+      context: .
+      args:
+        VITE_ENABLE_DEMO: ${VITE_ENABLE_DEMO:-true}
+    restart: unless-stopped
+    ports:
+      - "${FRONTEND_PORT:-5173}:80"
+    environment:
+      BACKEND_URL: ${BACKEND_URL:-http://host.docker.internal:8080}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--spider", "http://127.0.0.1/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
