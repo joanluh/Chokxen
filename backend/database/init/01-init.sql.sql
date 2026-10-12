@@ -180,26 +180,6 @@ INSERT INTO `equipos` (`equipoId`, `ligaId`, `fechaFundacion`, `nombreEquipo`) V
 (84, 4, '1899-05-13 00:00:00', 'Vitória');
 
 
-
-
-
-
-
-CREATE TABLE `preferenciasusuario` (
-  `idPreferenciasUsuario` int(11) NOT NULL,
-  `clienteId` int(11) NOT NULL,
-  `equipoFavoritoId` int(11) NOT NULL,
-  `ligaFavoritaId` int(11) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Volcado de datos para la tabla `preferenciasusuario`
---
-
-INSERT INTO `preferenciasusuario` (`idPreferenciasUsuario`, `clienteId`, `equipoFavoritoId`, `ligaFavoritaId`) VALUES
-(1, 1, 18, 1);
-
---
 -- Índices para tablas volcadas
 --
 
@@ -233,15 +213,7 @@ ALTER TABLE `ligas`
 ALTER TABLE `paises`
   ADD PRIMARY KEY (`idPais`);
 
---
--- Indices de la tabla `preferenciasusuario`
---
-ALTER TABLE `preferenciasusuario`
-  ADD PRIMARY KEY (`idPreferenciasUsuario`),
-  ADD UNIQUE KEY `clienteId` (`clienteId`),
-  ADD KEY `equipoFavoritoId` (`equipoFavoritoId`),
-  ADD KEY `ligaFavoritaId` (`ligaFavoritaId`),
-  ADD KEY `ix_PreferenciasUsuario_idPreferenciasUsuario` (`idPreferenciasUsuario`);
+
 
 --
 -- AUTO_INCREMENT de las tablas volcadas
@@ -271,11 +243,7 @@ ALTER TABLE `ligas`
 ALTER TABLE `paises`
   MODIFY `idPais` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
---
--- AUTO_INCREMENT de la tabla `preferenciasusuario`
---
-ALTER TABLE `preferenciasusuario`
-  MODIFY `idPreferenciasUsuario` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+
 
 --
 -- Restricciones para tablas volcadas
@@ -293,15 +261,112 @@ ALTER TABLE `equipos`
 ALTER TABLE `ligas`
   ADD CONSTRAINT `ligas_ibfk_1` FOREIGN KEY (`paisId`) REFERENCES `paises` (`idPais`);
 
---
--- Filtros para la tabla `preferenciasusuario`
---
-ALTER TABLE `preferenciasusuario`
-  ADD CONSTRAINT `preferenciasusuario_ibfk_1` FOREIGN KEY (`clienteId`) REFERENCES `clientes` (`clienteId`),
-  ADD CONSTRAINT `preferenciasusuario_ibfk_2` FOREIGN KEY (`equipoFavoritoId`) REFERENCES `equipos` (`equipoId`),
-  ADD CONSTRAINT `preferenciasusuario_ibfk_3` FOREIGN KEY (`ligaFavoritaId`) REFERENCES `ligas` (`idLiga`);
-COMMIT;
+
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
+
+CREATE TABLE IF NOT EXISTS jugadores (
+    idJugador int(11) NOT NULL AUTO_INCREMENT,
+    idEquipo int(11) NOT NULL,
+    nacionalidadId int(11) NOT NULL,
+    nombreJugador varchar(100) NOT NULL,
+    apellido varchar(100) NOT NULL,
+    apodo varchar(100) DEFAULT NULL,
+    posicion varchar(50) NOT NULL,
+    numeroDeCamiseta int(11) NOT NULL,
+    PRIMARY KEY (idJugador),
+    KEY idEquipo (idEquipo),
+    KEY nacionalidadId (nacionalidadId),
+    CONSTRAINT jugadores_ibfk_1 FOREIGN KEY (idEquipo) REFERENCES equipos (equipoId),
+    CONSTRAINT jugadores_ibfk_2 FOREIGN KEY (nacionalidadId) REFERENCES paises (idPais)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+INSERT INTO jugadores
+(idEquipo, nacionalidadId, nombreJugador, apellido, apodo, posicion, numeroDeCamiseta)
+VALUES
+
+-- 1. América
+(1, 1, 'Henry', 'Martín', 'La Bomba', 'Delantero', 21),
+(1, 1, 'Israel', 'Reyes', NULL, 'Defensa', 3),
+
+-- 2. Atlas
+(2, 2, 'Camilo', 'Vargas', 'El Superhéroe Colombiano', 'Portero', 12),
+(2, 1, 'Luis', 'Esteves', NULL, 'Mediocampista', 8),
+
+-- 3. Atlético de San Luis
+(3, 1, 'Andrés', 'Sánchez', NULL, 'Portero', 1),
+(3, 2, 'Sebastien', 'Salles-Lamonge', NULL, 'Mediocampista', 19),
+
+-- 4. Cruz Azul
+(4, 2, 'Kevin', 'Mier', NULL, 'Portero', 23),
+(4, 1, 'Erik', 'Lira', 'El Pitbull', 'Mediocampista', 6),
+
+-- 5. FC Juárez
+(5, 1, 'Sebastián', 'Jurado', NULL, 'Portero', 1),
+(5, 1, 'Oscar', 'Estupiñan', NULL, 'Delantero', 9),
+
+-- 6. Guadalajara
+(6, 1, 'Raul', 'Rangel', 'Tala', 'Portero', 1),
+(6, 1, 'Roberto', 'Alvarado', 'Piojo', 'Delantero', 25),
+
+-- 7. León
+(7, 1, 'Oscar', 'Garcia', NULL, 'Portero', 1),
+(7, 1, 'Dieber', 'Cambindo', NULL, 'Delantero', 9),
+
+-- 8. Atlante (sustituye a Mazatlán en Apertura 2026)
+(8, 1, 'Christian', 'Bermúdez', 'El Hobbit', 'Mediocampista', 11),
+(8, 1, 'Luis', 'Puente', NULL, 'Delantero', 9),
+
+-- 9. Monterrey
+(9, 2, 'Esteban', 'Andrada', 'Sabandija', 'Portero', 1),
+(9, 3, 'Diego', 'Rossi', NULL, 'Delantero', 10),
+
+-- 10. Necaxa
+(10, 3, 'Lorenzo', 'Faraveli', 'Lolo', 'Mediocampista', 22),
+(10, 2, 'Ante', 'Rosero', NULL, 'Defensor', 27),
+
+-- 11. Pachuca
+(11, 1, 'Carlos', 'Moreno', NULL, 'Portero', 25),
+(11, 4, 'Oussama', 'Idrissi', NULL, 'Delantero', 7),
+
+-- 12. Puebla
+(12, 1, 'Daniel', 'Gutierrez', NULL, 'Portero', 1),
+(12, 1, 'Facundo', 'Almada', NULL, 'Defensor', 5),
+
+-- 13. Querétaro
+(13, 1, 'Guillermo', 'Allison', NULL, 'Portero', 25),
+(13, 2, 'Ali', 'Avila', NULL, 'Delantero', 9),
+
+-- 14. Santos Laguna
+(14, 1, 'Carlos', 'Acevedo', 'El Guardián', 'Portero', 1),
+(14, 1, 'Eduardo', 'Aguirre', 'El Mudo', 'Delantero', 9),
+
+-- 15. Tigres
+(15, 2, 'Nahuel', 'Guzmán', 'El Patón', 'Portero', 1),
+(15, 2, 'Guillermo', 'Martinez', 'Memote', 'Delantero', 22),
+
+-- 16. Tijuana
+(16, 1, 'Antonio', 'Rodríguez', 'Toño', 'Portero', 1),
+(16, 1, 'Gilberto', 'Mora', NULL, 'Mediocampista', 10),
+
+-- 17. Toluca
+(17, 1, 'Alexis', 'Vega', 'Gru', 'Delantero', 10),
+(17, 1, 'Víctor', 'Guzmán', 'Pocho', 'Mediocampista', 14),
+
+-- 18. Pumas
+(18, 1, 'Keilor', 'Navas', 'El Halcón', 'Portero', 1),
+(18, 1, 'Cesar', 'Huerta', 'Chino', 'Delantero', 10);
+
+ALTER TABLE jugadores
+MODIFY idJugador INT(11) NOT NULL AUTO_INCREMENT,
+AUTO_INCREMENT = 37;
+
+CREATE TABLE IF NOT EXISTS preferenciasusuario (
+    idPreferenciasUsuario INT AUTO_INCREMENT PRIMARY KEY,
+    clienteId INT NOT NULL,
+    tipoFavorito ENUM('equipo', 'liga', 'jugador') NOT NULL,
+    elementoId INT NOT NULL,
+    CONSTRAINT fk_preferencia_cliente FOREIGN KEY (clienteId) REFERENCES clientes (clienteId) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;

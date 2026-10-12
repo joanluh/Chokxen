@@ -1,0 +1,804 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chokxen Sport - Plataforma Oficial</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen selection:bg-emerald-500 selection:text-white font-sans antialiased">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, createContext, useContext } = React;
+        const apiBase = 'http://0.0.0.0:8080';
+
+        const AuthContext = createContext(null);
+        const useAuth = () => useContext(AuthContext);
+
+        const apiFetch = async (endpoint, options = {}) => {
+            const headers = options.headers || {};
+            headers['Chokxen-SPORT'] = 'true';
+
+            if (!options.skipAuth) {
+                const token = localStorage.getItem('chokxenAccessToken');
+                if (token) headers['Authorization'] = `Bearer ${token}`;
+            }
+
+            let response = await fetch(`${apiBase}${endpoint}`, { ...options, headers });
+
+            if (response.status === 401 && !options._retry && !options.skipAuth) {
+                options._retry = true;
+                const refToken = localStorage.getItem('chokxenRefreshToken');
+                if (refToken) {
+                    try {
+                        const refreshRes = await fetch(`${apiBase}/api/v1/auth/refresh`, {
+                            method: 'POST',
+                            headers: { 'Chokxen-SPORT': 'true', 'refreshToken': refToken }
+                        });
+                        if (refreshRes.ok) {
+                            const data = await refreshRes.json();
+                            const newAccess = data.accessToken || data.access_token;
+                            if (newAccess) {
+                                localStorage.setItem('chokxenAccessToken', newAccess);
+                                headers['Authorization'] = `Bearer ${newAccess}`;
+                                response = await fetch(`${apiBase}${endpoint}`, { ...options, headers });
+                            }
+                        }
+                    } catch (e) {
+                        console.warn("Error al renovar token de acceso");
+                    }
+                }
+            }
+
+            if (!response.ok) {
+                const errData = await response.json().catch(() => ({}));
+                throw new Error(errData.detail || `Error en la solicitud: ${response.statusText}`);
+            }
+
+            return response.json();
+        };
+
+        const AuthProvider = ({ children }) => {
+            const [user, setUser] = useState(null);
+            const [token, setToken] = useState(localStorage.getItem('chokxenAccessToken') || '');
+            const [loading, setLoading] = useState(true);
+            const [error, setError] = useState('');
+
+            const login = async (username, password) => {
+                setError('');
+                try {
+                    const formData = new URLSearchParams();
+                    formData.append('username', username);
+                    formData.append('password', password);
+
+                    const data = await apiFetch('/api/v1/auth/login', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                        body: formData.toString(),
+                        skipAuth: true
+                    });
+
+                    const accessToken = data.accessToken || data.access_token;
+                    const refToken = data.refreshToken || data.refresh_token;
+
+                    setToken(accessToken);
+                    localStorage.setItem('chokxenAccessToken', accessToken);
+                    if (refToken) localStorage.setItem('chokxenRefreshToken', refToken);
+
+                    await fetchMe(accessToken);
+                    return true;
+                } catch (err) {
+                    setError(err.message || 'Credenciales inválidas');
+                    return false;
+                }
+            };
+
+            const register = async (correo, nombreUsuario, password) => {
+                setError('');
+                try {
+                    const payload = { correo, nombreUsuario, password, rol: 'Cliente', plan: 'Basico' };
+                    await apiFetch('/api/v1/auth/register', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload),
+                        skipAuth: true
+                    });
+                    return true;
+                } catch (err) {
+                    setError(err.message || 'Error en el registro');
+                    return false;
+                }
+            };
+
+            const handleLogout = async () => {
+                try {
+                    if (token) await apiFetch('/api/v1/auth/logout', { method: 'POST' });
+                } catch (e) {}
+                setToken('');
+                setUser(null);
+                localStorage.removeItem('chokxenAccessToken');
+                localStorage.removeItem('chokxenRefreshToken');
+            };
+
+            const fetchMe = async (currentToken) => {
+                if (!currentToken) {
+                    setLoading(false);
+                    return;
+                }
+                try {
+                    const profile = await apiFetch('/api/v1/usuarios/me');
+                    setUser(profile);
+                } catch (e) {
+                    handleLogout();
+                } finally {
+                    setLoading(false);
+                }
+            };
+
+            useEffect(() => {
+                if (token) fetchMe(token);
+                else setLoading(false);
+            }, []);
+
+            return (
+                <AuthContext.Provider value={{ user, setUser, token, loading, error, login, register, handleLogout, setError }}>
+                    {children}
+                </AuthContext.Provider>
+            );
+        };
+
+        const AuthScreen = () => {
+            const { login, register, error, setError } = useAuth();
+            const [isLogin, setIsLogin] = useState(true);
+            const [loading, setLoading] = useState(false);
+            const [successMsg, setSuccessMsg] = useState('');
+            const [form, setForm] = useState({ username: '', correo: '', nombreUsuario: '', password: '' });
+
+            const handleSubmit = async (e) => {
+                e.preventDefault();
+                setLoading(true);
+                setSuccessMsg('');
+                setError('');
+
+                if (isLogin) {
+                    await login(form.username, form.password);
+                } else {
+                    const ok = await register(form.correo, form.nombreUsuario, form.password);
+                    if (ok) {
+                        setSuccessMsg('¡Registro exitoso! Cuenta básica creada. Ya puedes iniciar sesión.');
+                        setIsLogin(true);
+                        setForm({ ...form, password: '' });
+                    }
+                }
+                setLoading(false);
+            };
+
+            return (
+                <div className="min-h-screen flex items-center justify-center p-4 bg-slate-950">
+                    <div className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-3xl p-8 shadow-2xl">
+                        <div className="text-center mb-6">
+                            <h1 className="text-2xl font-black bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent">CHOKXEN SPORT</h1>
+                            <p className="text-xs text-slate-400 mt-1">Plataforma Oficial[cite: 7]</p>
+                            
+                            <div className="flex bg-slate-950 p-1.5 rounded-xl mt-6 border border-slate-800">
+                                <button onClick={() => { setIsLogin(true); setError(''); setSuccessMsg(''); }} className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${isLogin ? 'bg-emerald-600 text-white shadow-md' : 'text-slate-400'}`}>Iniciar Sesión</button>
+                                <button onClick={() => { setIsLogin(false); setError(''); setSuccessMsg(''); }} className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${!isLogin ? 'bg-emerald-600 text-white shadow-md' : 'text-slate-400'}`}>Registro Básico</button>
+                            </div>
+                        </div>
+
+                        {error && <div className="mb-4 bg-red-950/50 border border-red-800 text-red-200 p-3 rounded-xl text-xs">{error}</div>}
+                        {successMsg && <div className="mb-4 bg-emerald-950/50 border border-emerald-800 text-emerald-200 p-3 rounded-xl text-xs">{successMsg}</div>}
+
+                        <form onSubmit={handleSubmit} className="space-y-4">
+                            {isLogin ? (
+                                <div>
+                                    <label className="block text-xs font-semibold text-slate-400 mb-1">Usuario o Correo</label>
+                                    <input type="text" required value={form.username} onChange={e => setForm({...form, username: e.target.value})} placeholder="tucorreo@ejemplo.com" className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-3 text-sm focus:border-emerald-500 focus:outline-none" />
+                                </div>
+                            ) : (
+                                <>
+                                    <div>
+                                        <label className="block text-xs font-semibold text-slate-400 mb-1">Nombre de Usuario</label>
+                                        <input type="text" required value={form.nombreUsuario} onChange={e => setForm({...form, nombreUsuario: e.target.value})} placeholder="Tu nombre" className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-3 text-sm focus:border-emerald-500 focus:outline-none" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-semibold text-slate-400 mb-1">Correo Electrónico</label>
+                                        <input type="email" required value={form.correo} onChange={e => setForm({...form, correo: e.target.value})} placeholder="correo@ejemplo.com" className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-3 text-sm focus:border-emerald-500 focus:outline-none" />
+                                    </div>
+                                </>
+                            )}
+                            <div>
+                                <label className="block text-xs font-semibold text-slate-400 mb-1">Contraseña</label>
+                                <input type="password" required value={form.password} onChange={e => setForm({...form, password: e.target.value})} placeholder="••••••••" className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-3 text-sm focus:border-emerald-500 focus:outline-none" />
+                            </div>
+
+                            <button type="submit" disabled={loading} className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3.5 rounded-xl transition-all text-sm mt-2 disabled:opacity-50 shadow-lg shadow-emerald-900/30">
+                                {loading ? 'Procesando...' : (isLogin ? 'Acceder al Sistema' : 'Crear Cuenta Básica')}
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            );
+        };
+
+        const PreferencesModal = ({ isOpen, onClose, onSaved, favoritosActuales, ligas, equipos, jugadores }) => {
+            const [selectedLigas, setSelectedLigas] = useState([]);
+            const [selectedEquipos, setSelectedEquipos] = useState([]);
+            const [selectedJugadores, setSelectedJugadores] = useState([]);
+            const [loading, setLoading] = useState(false);
+
+            // Estados para contraer o expandir las secciones (Accordions)
+            const [collapseLigas, setCollapseLigas] = useState(false);
+            const [collapseEquipos, setCollapseEquipos] = useState(false);
+            const [collapseJugadores, setCollapseJugadores] = useState(false);
+
+            useEffect(() => {
+                if (isOpen) {
+                    setSelectedLigas([]);
+                    setSelectedEquipos([]);
+                    setSelectedJugadores([]);
+                    setCollapseLigas(false);
+                    setCollapseEquipos(false);
+                    setCollapseJugadores(false);
+                }
+            }, [isOpen]);
+
+            const toggleLiga = (id) => {
+                setSelectedLigas(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+            };
+
+            const toggleEquipo = (id) => {
+                setSelectedEquipos(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+            };
+
+            const toggleJugador = (id) => {
+                setSelectedJugadores(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+            };
+
+            const equiposDisponibles = equipos.filter(eq => selectedLigas.includes(eq.ligaId));
+            const jugadoresDisponibles = jugadores.filter(jug => selectedEquipos.includes(jug.idEquipo));
+
+            const handleSave = async (e) => {
+                e.preventDefault();
+                setLoading(true);
+                try {
+                    for (const ligaId of selectedLigas) {
+                        await apiFetch('/api/v1/favoritos/', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ tipoFavorito: 'liga', elementoId: ligaId })
+                        });
+                    }
+                    for (const equipoId of selectedEquipos) {
+                        await apiFetch('/api/v1/favoritos/', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ tipoFavorito: 'equipo', elementoId: equipoId })
+                        });
+                    }
+                    for (const jugadorId of selectedJugadores) {
+                        await apiFetch('/api/v1/favoritos/', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ tipoFavorito: 'jugador', elementoId: jugadorId })
+                        });
+                    }
+                    onSaved();
+                    onClose();
+                } catch (err) {
+                    alert("Error al guardar preferencias: " + err.message);
+                } finally {
+                    setLoading(false);
+                }
+            };
+
+            const eliminarFavorito = async (idFavorito) => {
+                if (!confirm("¿Deseas eliminar este favorito?")) return;
+                try {
+                    await apiFetch(`/api/v1/favoritos/${idFavorito}`, { method: 'DELETE' });
+                    onSaved();
+                } catch (err) {
+                    alert("Error al eliminar favorito: " + err.message);
+                }
+            };
+
+            const resolverNombre = (fav) => {
+                const tipo = fav.tipoFavorito || fav.tipo;
+                const id = fav.elementoId || fav.id;
+                if (tipo === 'liga') {
+                    const l = ligas.find(x => (x.idLiga || x.id) === id);
+                    return l ? (l.nombreLiga || l.nombre) : `Liga ID: ${id}`;
+                }
+                if (tipo === 'equipo') {
+                    const eq = equipos.find(x => (x.equipoId || x.id) === id);
+                    return eq ? (eq.nombreEquipo || eq.nombre) : `Equipo ID: ${id}`;
+                }
+                if (tipo === 'jugador') {
+                    const jug = jugadores.find(x => (x.idJugador || x.id) === id);
+                    return jug ? `${jug.nombreJugador} ${jug.apellido}` : `Jugador ID: ${id}`;
+                }
+                return `Elemento ID: ${id}`;
+            };
+
+            if (!isOpen) return null;
+
+            return (
+                <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 overflow-y-auto">
+                    <div className="bg-slate-900 border border-slate-800 rounded-3xl max-w-2xl w-full p-6 shadow-2xl space-y-6 my-8">
+                        <div className="flex justify-between items-center">
+                            <h3 className="text-xl font-black text-white">Panel de Preferencias (Favoritos)</h3>
+                            <button onClick={onClose} className="text-slate-400 hover:text-white text-sm font-bold">✕</button>
+                        </div>
+
+                        {/* LISTADO DE PREFERENCIAS ACTUALES CON OPCIÓN DE ELIMINAR */}
+                        <div className="bg-slate-950 border border-slate-800 p-4 rounded-2xl space-y-3">
+                            <h4 className="text-xs font-bold uppercase tracking-wider text-emerald-400">Tus Favoritos Guardados Actuales</h4>
+                            {favoritosActuales.length === 0 ? (
+                                <p className="text-xs text-slate-400">No tienes preferencias registradas en la base de datos[cite: 5].</p>
+                            ) : (
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-40 overflow-y-auto pr-1">
+                                    {favoritosActuales.map((fav, i) => {
+                                        const favId = fav.idPreferenciasUsuario || fav.idFavoritosUsuario || fav.id;
+                                        return (
+                                            <div key={i} className="bg-slate-900 border border-slate-800 p-3 rounded-xl flex justify-between items-center text-xs">
+                                                <div>
+                                                    <span className="font-bold text-white block">{resolverNombre(fav)}</span>
+                                                    <span className="text-[10px] text-emerald-400 uppercase">Tipo: {fav.tipoFavorito || fav.tipo}</span>
+                                                </div>
+                                                <button type="button" onClick={() => eliminarFavorito(favId)} className="bg-red-950/50 hover:bg-red-900 text-red-400 border border-red-900 px-2 py-1 rounded-lg text-[10px] font-bold transition-all">Eliminar</button>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            )}
+                        </div>
+
+                        <hr className="border-slate-800" />
+                        <p className="text-xs text-slate-400">Agrega nuevos favoritos seleccionando en orden jerárquico. Puedes contraer o expandir cada sección según lo requieras.</p>
+                        
+                        <form onSubmit={handleSave} className="space-y-4 max-h-[50vh] overflow-y-auto pr-2">
+                            {/* SECCIÓN 1: LIGAS (Contraíble) */}
+                            <div className="bg-slate-950 border border-slate-800 p-4 rounded-2xl space-y-3">
+                                <div className="flex justify-between items-center cursor-pointer" onClick={() => setCollapseLigas(!collapseLigas)}>
+                                    <h4 className="text-xs font-bold uppercase tracking-wider text-emerald-400">1. Seleccionar Ligas Favoritas</h4>
+                                    <button type="button" className="text-xs text-slate-400 font-bold">{collapseLigas ? '[ + Expandir ]' : '[ - Contraer ]'}</button>
+                                </div>
+                                {!collapseLigas && (
+                                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                                        {ligas.map(l => {
+                                            const id = l.idLiga || l.id;
+                                            const isSelected = selectedLigas.includes(id);
+                                            return (
+                                                <div key={id} onClick={() => toggleLiga(id)} className={`p-3 rounded-xl border cursor-pointer text-xs font-bold transition-all flex items-center justify-between ${isSelected ? 'bg-emerald-600 border-emerald-500 text-white' : 'bg-slate-900 border-slate-800 text-slate-300'}`}>
+                                                    <span>{l.nombreLiga || l.nombre}</span>
+                                                    <input type="checkbox" checked={isSelected} onChange={() => {}} className="accent-emerald-400 pointer-events-none" />
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* SECCIÓN 2: EQUIPOS (Contraíble) */}
+                            {selectedLigas.length > 0 && (
+                                <div className="bg-slate-950 border border-slate-800 p-4 rounded-2xl space-y-3">
+                                    <div className="flex justify-between items-center cursor-pointer" onClick={() => setCollapseEquipos(!collapseEquipos)}>
+                                        <h4 className="text-xs font-bold uppercase tracking-wider text-emerald-400">2. Seleccionar Equipos de tus Ligas</h4>
+                                        <button type="button" className="text-xs text-slate-400 font-bold">{collapseEquipos ? '[ + Expandir ]' : '[ - Contraer ]'}</button>
+                                    </div>
+                                    {!collapseEquipos && (
+                                        equiposDisponibles.length === 0 ? (
+                                            <p className="text-xs text-slate-500">No hay equipos disponibles para las ligas seleccionadas.</p>
+                                        ) : (
+                                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                                                {equiposDisponibles.map(eq => {
+                                                    const id = eq.equipoId || eq.id;
+                                                    const isSelected = selectedEquipos.includes(id);
+                                                    return (
+                                                        <div key={id} onClick={() => toggleEquipo(id)} className={`p-3 rounded-xl border cursor-pointer text-xs font-bold transition-all flex items-center justify-between ${isSelected ? 'bg-emerald-600 border-emerald-500 text-white' : 'bg-slate-900 border-slate-800 text-slate-300'}`}>
+                                                            <span>{eq.nombreEquipo || eq.nombre}</span>
+                                                            <input type="checkbox" checked={isSelected} onChange={() => {}} className="accent-emerald-400 pointer-events-none" />
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        )
+                                    )}
+                                </div>
+                            )}
+
+                            {/* SECCIÓN 3: JUGADORES (Contraíble) */}
+                            {selectedEquipos.length > 0 && (
+                                <div className="bg-slate-950 border border-slate-800 p-4 rounded-2xl space-y-3">
+                                    <div className="flex justify-between items-center cursor-pointer" onClick={() => setCollapseJugadores(!collapseJugadores)}>
+                                        <h4 className="text-xs font-bold uppercase tracking-wider text-emerald-400">3. Seleccionar Jugadores de tus Equipos</h4>
+                                        <button type="button" className="text-xs text-slate-400 font-bold">{collapseJugadores ? '[ + Expandir ]' : '[ - Contraer ]'}</button>
+                                    </div>
+                                    {!collapseJugadores && (
+                                        jugadoresDisponibles.length === 0 ? (
+                                            <p className="text-xs text-slate-500">No hay jugadores registrados para los equipos seleccionados.</p>
+                                        ) : (
+                                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                                                {jugadoresDisponibles.map(jug => {
+                                                    const id = jug.idJugador || jug.id;
+                                                    const isSelected = selectedJugadores.includes(id);
+                                                    return (
+                                                        <div key={id} onClick={() => toggleJugador(id)} className={`p-3 rounded-xl border cursor-pointer text-xs font-bold transition-all flex items-center justify-between ${isSelected ? 'bg-emerald-600 border-emerald-500 text-white' : 'bg-slate-900 border-slate-800 text-slate-300'}`}>
+                                                            <span>{jug.nombreJugador} {jug.apellido}</span>
+                                                            <input type="checkbox" checked={isSelected} onChange={() => {}} className="accent-emerald-400 pointer-events-none" />
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        )
+                                    )}
+                                </div>
+                            )}
+
+                            <button type="submit" disabled={loading} className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 rounded-xl text-xs transition-all shadow-lg sticky bottom-0">
+                                {loading ? 'Guardando...' : 'Guardar Nuevas Preferencias'}
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            );
+        };
+
+        const Dashboard = () => {
+            const { user, handleLogout } = useAuth();
+            const [currentTab, setCurrentTab] = useState('inicio');
+
+            // Buscador General (US-04)[cite: 3]
+            const [searchQuery, setSearchQuery] = useState('');
+            const [searchResults, setSearchResults] = useState({ ligas: [], equipos: [], jugadores: [] });
+            const [searchLoading, setSearchLoading] = useState(false);
+            const [showSearchPanel, setShowSearchPanel] = useState(false);
+
+            // Favoritos / Preferencias
+            const [favoritos, setFavoritos] = useState([]);
+            const [showPreferencesModal, setShowPreferencesModal] = useState(false);
+
+            // Datos generales para mapeo
+            const [ligas, setLigas] = useState([]);
+            const [ligaSeleccionada, setLigaSeleccionada] = useState(null);
+            const [equipos, setEquipos] = useState([]);
+            const [equipoSeleccionado, setEquipoSeleccionado] = useState(null);
+            const [jugadores, setJugadores] = useState([]);
+
+            const cargarDatosGenerales = async () => {
+                try {
+                    const [resFav, resLigas, resEquipos, resJugadores] = await Promise.all([
+                        apiFetch('/api/v1/favoritos/').catch(() => []),
+                        apiFetch('/api/v1/competiciones/').catch(() => []),
+                        apiFetch('/api/v1/equipos/').catch(() => []),
+                        apiFetch('/api/v1/jugadores/').catch(() => [])
+                    ]);
+                    setFavoritos(Array.isArray(resFav) ? resFav : resFav.favoritos || []);
+                    setLigas(Array.isArray(resLigas) ? resLigas : resLigas.competiciones || []);
+                    setEquipos(Array.isArray(resEquipos) ? resEquipos : resEquipos.equipos || []);
+                    setJugadores(Array.isArray(resJugadores) ? resJugadores : resJugadores.jugadores || []);
+                } catch (e) {}
+            };
+
+            useEffect(() => {
+                cargarDatosGenerales();
+            }, []);
+
+            const obtenerNombreFavorito = (fav) => {
+                const tipo = fav.tipoFavorito || fav.tipo;
+                const id = fav.elementoId || fav.id;
+                if (tipo === 'liga') {
+                    const l = ligas.find(x => (x.idLiga || x.id) === id);
+                    return l ? (l.nombreLiga || l.nombre) : `Liga ID: ${id}`;
+                }
+                if (tipo === 'equipo') {
+                    const eq = equipos.find(x => (x.equipoId || x.id) === id);
+                    return eq ? (eq.nombreEquipo || eq.nombre) : `Equipo ID: ${id}`;
+                }
+                if (tipo === 'jugador') {
+                    const jug = jugadores.find(x => (x.idJugador || x.id) === id);
+                    return jug ? `${jug.nombreJugador} ${jug.apellido}` : `Jugador ID: ${id}`;
+                }
+                return `Elemento ID: ${id}`;
+            };
+
+            const ejecutarBusqueda = async (e) => {
+                if (e) e.preventDefault();
+                if (!searchQuery || searchQuery.length < 3) {
+                    alert("Ingresa al menos 3 caracteres para buscar[cite: 3].");
+                    return;
+                }
+                setSearchLoading(true);
+                setShowSearchPanel(true);
+                try {
+                    const data = await apiFetch(`/api/v1/busqueda/?q=${encodeURIComponent(searchQuery)}`);
+                    setSearchResults({
+                        ligas: data.ligas || [],
+                        equipos: data.equipos || [],
+                        jugadores: data.jugadores || []
+                    });
+                } catch (err) {
+                    setSearchResults({ ligas: [], equipos: [], jugadores: [] });
+                } finally {
+                    setSearchLoading(false);
+                }
+            };
+
+            const seleccionarLiga = (liga) => {
+                setLigaSeleccionada(liga);
+                setEquipoSeleccionado(null);
+            };
+
+            const seleccionarEquipo = (equipo) => {
+                setEquipoSeleccionado(equipo);
+            };
+
+            const equiposFiltrados = ligaSeleccionada 
+                ? equipos.filter(eq => eq.ligaId === (ligaSeleccionada.idLiga || ligaSeleccionada.id))
+                : [];
+
+            const jugadoresFiltrados = equipoSeleccionado
+                ? jugadores.filter(jug => jug.idEquipo === (equipoSeleccionado.equipoId || equipoSeleccionado.id))
+                : [];
+
+            const totalResultadosBusqueda = searchResults.ligas.length + searchResults.equipos.length + searchResults.jugadores.length;
+
+            return (
+                <div className="min-h-screen flex flex-col bg-slate-950 text-slate-100">
+                    <header className="bg-slate-900 border-b border-slate-800 sticky top-0 z-40 px-4 py-3 flex flex-col sm:flex-row items-center justify-between gap-4">
+                        <div className="flex items-center justify-between w-full sm:w-auto">
+                            <span className="font-black text-emerald-400 tracking-wider cursor-pointer text-base" onClick={() => { setShowSearchPanel(false); setCurrentTab('inicio'); }}>CHOKXEN SPORT</span>
+                        </div>
+                        
+                        <form onSubmit={ejecutarBusqueda} className="flex-1 max-w-md w-full relative flex items-center space-x-2">
+                            <input 
+                                type="text" 
+                                value={searchQuery}
+                                onChange={e => setSearchQuery(e.target.value)}
+                                placeholder="Buscar equipo, liga o jugador (mín. 3 letras)...[cite: 3]" 
+                                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 text-xs focus:border-emerald-500 focus:outline-none text-slate-100"
+                            />
+                            <button type="submit" className="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-2 rounded-xl text-xs font-bold transition-all">Buscar</button>
+                        </form>
+
+                        {/* Panel de Usuario Superior Derecho */}
+                        <div className="flex items-center space-x-3 bg-slate-950/80 px-4 py-2 rounded-2xl border border-slate-800 w-full sm:w-auto justify-between sm:justify-end">
+                            <div className="text-right">
+                                <p className="text-xs font-bold text-white">{user?.nombreUsuario}</p>
+                                <p className="text-[10px] text-emerald-400 font-semibold">Créditos: \${user?.creditosVirtuales ?? 1500.00}</p>
+                            </div>
+                            <span className="text-[10px] bg-emerald-950 text-emerald-400 border border-emerald-800 px-2.5 py-1 rounded-full font-bold uppercase">{user?.rol || 'Cliente'}</span>
+                            <button type="button" onClick={() => setShowPreferencesModal(true)} className="bg-slate-800 hover:bg-slate-700 p-2 rounded-xl text-slate-300 transition-all text-xs" title="Panel de Preferencias">⚙️</button>
+                            <button type="button" onClick={handleLogout} className="bg-red-950/40 hover:bg-red-900 text-red-400 border border-red-900 px-3 py-1.5 rounded-xl text-xs font-bold transition-all">Salir</button>
+                        </div>
+                    </header>
+
+                    <nav className="bg-slate-900 border-b border-slate-800 px-4 py-2 flex space-x-2 text-xs font-bold overflow-x-auto">
+                        {['inicio', 'ligas', 'apuestas', 'tienda'].map(tab => (
+                            <button key={tab} type="button" onClick={() => { setShowSearchPanel(false); setCurrentTab(tab); }} className={`px-4 py-2 rounded-xl capitalize transition-all ${!showSearchPanel && currentTab === tab ? 'bg-emerald-600 text-white shadow-md' : 'text-slate-400 hover:text-white'}`}>
+                                {tab}
+                            </button>
+                        ))}
+                    </nav>
+
+                    <main className="flex-grow max-w-7xl w-full mx-auto p-4 sm:p-6">
+                        {showSearchPanel ? (
+                            <div className="space-y-6">
+                                <div className="flex justify-between items-center bg-slate-900 border border-slate-800 p-4 rounded-2xl">
+                                    <h2 className="text-lg font-black">Resultados de Búsqueda para: "{searchQuery}"[cite: 3]</h2>
+                                    <button type="button" onClick={() => setShowSearchPanel(false)} className="text-xs bg-slate-800 px-3 py-1.5 rounded-xl text-slate-300 hover:text-white">Volver</button>
+                                </div>
+                                {searchLoading ? (
+                                    <p className="text-xs text-slate-400 animate-pulse">Consultando base de datos[cite: 5]...</p>
+                                ) : totalResultadosBusqueda === 0 ? (
+                                    <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl text-center text-xs text-slate-400">No se encontraron coincidencias en la base de datos para este término[cite: 5].</div>
+                                ) : (
+                                    <div className="space-y-6">
+                                        {searchResults.ligas.length > 0 && (
+                                            <div>
+                                                <h3 className="text-xs font-bold uppercase tracking-wider text-emerald-400 mb-3">Ligas Encontradas ({searchResults.ligas.length})</h3>
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                                    {searchResults.ligas.map((liga, i) => (
+                                                        <div key={i} className="bg-slate-900 border border-slate-800 p-4 rounded-2xl flex justify-between items-center">
+                                                            <span className="text-xs font-bold text-white">{liga.nombreLiga || liga.nombre}</span>
+                                                            <span className="text-[10px] bg-slate-800 px-2.5 py-1 rounded-lg text-emerald-400">Liga</span>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {searchResults.equipos.length > 0 && (
+                                            <div>
+                                                <h3 className="text-xs font-bold uppercase tracking-wider text-emerald-400 mb-3">Equipos Encontrados ({searchResults.equipos.length})</h3>
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                                    {searchResults.equipos.map((eq, i) => (
+                                                        <div key={i} className="bg-slate-900 border border-slate-800 p-4 rounded-2xl flex justify-between items-center">
+                                                            <span className="text-xs font-bold text-white">{eq.nombreEquipo || eq.nombre}</span>
+                                                            <span className="text-[10px] bg-slate-800 px-2.5 py-1 rounded-lg text-emerald-400">Equipo</span>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {searchResults.jugadores.length > 0 && (
+                                            <div>
+                                                <h3 className="text-xs font-bold uppercase tracking-wider text-emerald-400 mb-3">Jugadores Encontrados ({searchResults.jugadores.length})</h3>
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                                    {searchResults.jugadores.map((jug, i) => (
+                                                        <div key={i} className="bg-slate-900 border border-slate-800 p-4 rounded-2xl flex justify-between items-center">
+                                                            <div>
+                                                                <span className="text-xs font-bold text-white block">{jug.nombreJugador} {jug.apellido}</span>
+                                                                <span className="text-[10px] text-slate-400">Posición: {jug.posicion} | Equipo: {jug.nombreEquipo || 'N/D'}</span>
+                                                            </div>
+                                                            <span className="text-xs bg-slate-800 px-2 py-1 rounded-lg text-emerald-400 font-bold">#{jug.numeroDeCamiseta}</span>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+                        ) : (
+                            <>
+                                {currentTab === 'inicio' && (
+                                    <div className="space-y-6">
+                                        <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl flex justify-between items-center">
+                                            <div>
+                                                <h2 className="text-2xl font-black">Bienvenido, {user?.nombreUsuario}</h2>
+                                                <p className="text-slate-400 text-xs mt-1">Conectado a <code className="text-emerald-400">192.168.1.76:8080</code> mediante token JWT seguro.</p>
+                                            </div>
+                                            <button type="button" onClick={() => setShowPreferencesModal(true)} className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-4 py-2.5 rounded-xl text-xs transition-all shadow-lg hidden sm:block">
+                                                Administrar Preferencias
+                                            </button>
+                                        </div>
+
+                                        {/* Sección de Preferencias / Favoritos del Cliente con Nombres Reales */}
+                                        <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl space-y-4">
+                                            <div className="flex justify-between items-center">
+                                                <h3 className="text-sm font-bold text-emerald-400 uppercase tracking-wider">Tus Preferencias y Favoritos</h3>
+                                                <button type="button" onClick={() => setShowPreferencesModal(true)} className="text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-1.5 rounded-xl font-bold transition-all">Gestionar / Modificar</button>
+                                            </div>
+                                            {favoritos.length === 0 ? (
+                                                <p className="text-xs text-slate-400">No tienes preferencias guardadas aún. Haz clic en "Gestionar / Modificar" para registrar tus favoritos.</p>
+                                            ) : (
+                                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                                    {favoritos.map((fav, i) => (
+                                                        <div key={i} className="bg-slate-950 border border-slate-800 p-4 rounded-2xl flex justify-between items-center">
+                                                            <div>
+                                                                <span className="text-xs font-bold text-white block">{obtenerNombreFavorito(fav)}</span>
+                                                                <span className="text-[10px] text-emerald-400 uppercase font-semibold">Tipo: {fav.tipoFavorito || fav.tipo}</span>
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {currentTab === 'ligas' && (
+                                    <div className="space-y-6">
+                                        <div className="flex justify-between items-center bg-slate-900 border border-slate-800 p-5 rounded-3xl">
+                                            <div>
+                                                <h2 className="text-xl font-black">Ligas Disponibles</h2>
+                                                <p className="text-xs text-slate-400 mt-0.5">Selecciona una liga para consultar sus equipos oficiales en la base de datos[cite: 5].</p>
+                                            </div>
+                                            {ligaSeleccionada && (
+                                                <button type="button" onClick={() => { setLigaSeleccionada(null); setEquipoSeleccionado(null); }} className="bg-slate-800 hover:bg-slate-700 px-4 py-2 rounded-xl text-xs font-bold transition-all">
+                                                    Cambiar de Liga
+                                                </button>
+                                            )}
+                                        </div>
+
+                                        {!ligaSeleccionada ? (
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                {ligas.map((liga, idx) => (
+                                                    <div key={idx} onClick={() => seleccionarLiga(liga)} className="bg-slate-900 border border-slate-800 hover:border-emerald-500/50 p-5 rounded-2xl cursor-pointer transition-all flex justify-between items-center group">
+                                                        <div>
+                                                            <h3 className="font-bold text-sm text-white group-hover:text-emerald-400 transition-colors">{liga.nombreLiga || liga.nombre}</h3>
+                                                            <span className="text-xs text-slate-400 uppercase">Temporada: {liga.temporadaActual || 'Actual'}</span>
+                                                        </div>
+                                                        <span className="text-xs bg-emerald-950 text-emerald-400 px-3 py-1.5 rounded-xl border border-emerald-900 font-bold">Ver Equipos</span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        ) : (
+                                            <div className="space-y-6">
+                                                <div className="bg-slate-950 border border-emerald-500/30 p-4 rounded-2xl flex items-center justify-between">
+                                                    <div>
+                                                        <span className="text-[10px] text-emerald-400 font-bold uppercase tracking-wider">Liga Activa</span>
+                                                        <h3 className="text-lg font-black text-white">{ligaSeleccionada.nombreLiga || ligaSeleccionada.nombre}</h3>
+                                                    </div>
+                                                </div>
+
+                                                <h3 className="text-sm font-bold uppercase tracking-wider text-slate-400">Equipos de esta Liga</h3>
+                                                {equiposFiltrados.length === 0 ? (
+                                                    <p className="text-xs text-slate-400">No se encontraron equipos registrados para esta liga.</p>
+                                                ) : (
+                                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                                        {equiposFiltrados.map((eq, i) => (
+                                                            <div key={i} onClick={() => seleccionarEquipo(eq)} className={`p-4 rounded-2xl border cursor-pointer transition-all ${equipoSeleccionado?.equipoId === eq.equipoId ? 'bg-emerald-950/40 border-emerald-500' : 'bg-slate-900 border-slate-800 hover:border-slate-700'}`}>
+                                                                <span className="font-bold text-sm text-white block">{eq.nombreEquipo || eq.nombre}</span>
+                                                                <span className="text-[10px] text-slate-400 block mt-1">Fundación: {eq.fechaFundacion ? eq.fechaFundacion.substring(0, 4) : 'N/D'}</span>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                )}
+
+                                                {equipoSeleccionado && (
+                                                    <div className="bg-slate-900 border border-slate-800 p-6 rounded-3xl space-y-4 mt-6">
+                                                        <h3 className="text-md font-black text-emerald-400">Plantilla de Jugadores: {equipoSeleccionado.nombreEquipo || equipoSeleccionado.nombre}</h3>
+                                                        {jugadoresFiltrados.length === 0 ? (
+                                                            <p className="text-xs text-slate-400">No hay jugadores registrados para este equipo.</p>
+                                                        ) : (
+                                                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                                                                {jugadoresFiltrados.map((jug, jIdx) => (
+                                                                    <div key={jIdx} className="bg-slate-950 border border-slate-800 p-3 rounded-xl flex justify-between items-center text-xs">
+                                                                        <div>
+                                                                            <span className="font-bold text-white block">{jug.nombreJugador} {jug.apellido}</span>
+                                                                            <span className="text-[10px] text-slate-400">Pos: {jug.posicion || 'General'}</span>
+                                                                        </div>
+                                                                        <span className="bg-slate-800 px-2 py-1 rounded-lg text-emerald-400 font-bold">#{jug.numeroDeCamiseta || '0'}</span>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+
+                                {currentTab === 'apuestas' && (
+                                    <div className="space-y-4">
+                                        <h2 className="text-xl font-black">Simulador de Apuestas[cite: 7]</h2>
+                                        <div className="bg-slate-900 border border-slate-800 p-5 rounded-2xl flex justify-between items-center text-xs">
+                                            <span>Créditos virtuales disponibles: <strong className="text-emerald-400">\${user?.creditosVirtuales ?? 1500.00}</strong></span>
+                                            <button type="button" className="bg-emerald-600 hover:bg-emerald-500 px-4 py-2 rounded-xl text-white font-bold transition-all">Simular Apuesta</button>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {currentTab === 'tienda' && (
+                                    <div className="space-y-4">
+                                        <h2 className="text-xl font-black">Tienda Chokxen (E-commerce)[cite: 5]</h2>
+                                        <div className="bg-slate-900 border border-slate-800 p-5 rounded-2xl text-xs text-slate-400">
+                                            Catálogo sincronizado con el perfil de usuario.
+                                        </div>
+                                    </div>
+                                )}
+                            </>
+                        )}
+                    </main>
+
+                    <PreferencesModal 
+                        isOpen={showPreferencesModal} 
+                        onClose={() => setShowPreferencesModal(false)} 
+                        onSaved={cargarDatosGenerales} 
+                        favoritosActuales={favoritos}
+                        ligas={ligas}
+                        equipos={equipos}
+                        jugadores={jugadores}
+                    />
+                </div>
+            );
+        };
+
+        const AppContent = () => {
+            const { token, loading } = useAuth();
+            if (loading) return <div className="min-h-screen flex items-center justify-center text-slate-400 text-sm animate-pulse">Cargando Chokxen Sport...</div>;
+            return token ? <Dashboard /> : <AuthScreen />;
+        };
+
+        ReactDOM.render(<AuthProvider><AppContent /></AuthProvider>, document.getElementById('root'));
+    </script>
+</body>
+</html>
