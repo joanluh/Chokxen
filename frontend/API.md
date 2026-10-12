@@ -1,31 +1,35 @@
-# Contrato del frontend con el backend existente
+# Integración de la SPA
 
-La SPA consulta `/api/v1` en el mismo origen. Nginx reenvía esas solicitudes a `BACKEND_URL`, configurado al iniciar el contenedor. [Arranque con Docker Compose](README.md).
+`contracts/openapi.json` se descargó de http://localhost:8080/openapi.json con el backend restaurado en Docker. Los esquemas de respuesta no están tipados en OpenAPI, por lo que también se verificaron las respuestas HTTP reales.
 
-| Acción | Método y ruta bajo `/api/v1` | Formato |
+| Operación | Método y ruta | Datos |
 | --- | --- | --- |
-| Registro | POST `/auth/register` | JSON `correo`, `password`, `nombreUsuario`, `rol: Cliente`, `plan: Basico/Premium` |
-| Login | POST `/auth/login` | URL encoded `username`, `password`, `grant_type: password` |
-| Perfil | GET `/usuarios/me` | Bearer |
-| Renovación | POST `/auth/refresh` | Header `refreshToken` |
-| Salir | POST `/auth/logout` | Bearer |
-| Favoritos | GET / POST `/favoritos/` | Bearer; POST `tipoFavorito`, `elementoId` |
-| Eliminar favorito | DELETE `/favoritos/{idPreferenciasUsuario}` | Bearer |
-| Ligas | GET `/competiciones/`, `/competiciones/{id}` | Bearer |
-| Equipos | GET `/equipos/`, `/equipos/{id}` | Bearer |
-| Jugadores | GET `/jugadores/`, `/jugadores/{id}` | Bearer |
-| Búsqueda | GET `/busqueda/?q=...` | Bearer, mínimo tres caracteres |
+| Registro | POST `/api/v1/auth/register` | JSON: correo, password, nombreUsuario, rol Cliente, plan Basico |
+| Login | POST `/api/v1/auth/login` | Formulario URL encoded: username, password, grant_type password |
+| Perfil | GET `/api/v1/usuarios/me` | Bearer; respuesta envuelta en usuario: correo, id, rol, plan |
+| Renovación | POST `/api/v1/auth/refresh` | Header refreshToken |
+| Logout | POST `/api/v1/auth/logout` | Bearer; el cliente elimina sus tokens aunque falle la conexión |
+| Catálogo | GET `/api/v1/competiciones/`, `/equipos/`, `/jugadores/` | Bearer; listas con IDs de la BD |
+| Búsqueda | GET `/api/v1/busqueda/?q=cesar` | Bearer; ligas, equipos, jugadores; mínimo tres caracteres |
+| Favoritos | GET/POST `/api/v1/favoritos/` | Bearer; POST tipoFavorito y elementoId |
+| Quitar favorito | DELETE `/api/v1/favoritos/{idPreferenciasUsuario}` | ID de la preferencia, no ID del equipo |
 
-Todas las solicitudes propias incluyen `Heart: CHOKXEN SPORT` y `Chokxen-SPORT: true`. Son encabezados de identificación: la autorización depende del Bearer validado por FastAPI. El proxy evita un preflight CORS entre el navegador y el backend. ESPN se consulta aparte sin tokens de usuarios.
+Todas las solicitudes a FastAPI incluyen `Heart: CHOKXEN SPORT` y `Chokxen-SPORT: true`. Estos headers identifican el cliente; la autenticación depende del Bearer validado por el backend.
 
-Login responde `access_token`, `refreshToken`, `token_type`. El perfil original responde `{mensaje, usuario: {correo, id, rol, plan}}`; el nombre mostrado usa el correo si el backend no devuelve `nombreUsuario`. El rol no se deduce del formulario. Registro y credenciales inválidas pueden responder 400 con `detail`; validaciones 422 se muestran sin imprimir contraseñas. Los tokens se conservan en sessionStorage y se eliminan al salir.
+El backend actual no devuelve nombreUsuario en `/usuarios/me`; el frontend muestra el nombre derivado del correo hasta que el backend incluya ese campo. No se crea ni modifica un endpoint de onboarding: se utilizan favoritos para las selecciones y almacenamiento local únicamente para recordar que se vio la bienvenida.
 
-No hay endpoint específico de onboarding: se usan catálogos y favoritos existentes. Los IDs de ESPN no se mezclan con los de la base de datos. La finalización sin preferencias se recuerda localmente. Las demos conservan sus preferencias en este navegador.
+## Pendiente confirmado en el backend
 
-## Límites de la versión restaurada
+La prueba HTTP real de `/auth/refresh` devuelve 200, pero `/usuarios/me` con el token renovado devuelve `id: null`. En `backend/routes/auth.py`, `newAccessToken` incluye sub/rol/plan y omite el ID que sí incluye login. El frontend verifica el perfil después de renovar, elimina la sesión incompleta y solicita volver a ingresar. Daniel debe incluir el ID del usuario en el token renovado para que la renovación sea transparente. La lógica del backend se dejó intacta.
 
-Se restaura el backend sin editarlo. Su `/auth/refresh` devuelve un token nuevo con correo, rol y plan, pero omite el ID de usuario. Daniel debe resolver esa omisión en el backend para que las operaciones de favoritos sigan funcionando tras renovar la sesión. Mientras tanto, volver a iniciar sesión obtiene un token con ID. No se intenta fabricar ni modificar tokens desde React. Logout elimina los tokens del cliente; el backend original no revoca JWT de forma persistente.
+Logout devuelve un mensaje; no revoca tokens en el servidor. La SPA elimina sus tokens y vuelve al acceso. Una revocación de servidor requiere implementación del backend.
 
-Las rutas `/historico`, importaciones y dataset de la integración anterior ya no se invocan. No están en el contrato de la versión base. ESPN conserva la consulta de resultados recientes y de los detalles con goleadores/estadísticas; la disponibilidad depende de la fuente. Tienda, pagos, apuestas, créditos, predicciones y gestión administrativa siguen simulados.
+## ESPN para el equipo
 
-El contrato OpenAPI adjunto se generó del código base, no del contenedor remoto en ejecución. Si la versión de Daniel difiere, usa el JSON obtenido de su `/openapi.json` como referencia para ajustar solo el frontend.
+- Partidos Liga MX: https://site.api.espn.com/apis/site/v2/sports/soccer/mex.1/scoreboard
+- Equipos Liga MX: https://site.api.espn.com/apis/site/v2/sports/soccer/mex.1/teams
+- Detalle de un partido: https://site.api.espn.com/apis/site/v2/sports/soccer/mex.1/summary?event=ID_DEL_EVENTO
+
+La fecha de scoreboard se puede indicar con `?dates=YYYYMMDD`. La SPA consulta fechas individuales y filtra la fecha en Ciudad de México para incluir partidos nocturnos. Hay cobertura configurada de Liga MX, Premier League, LaLiga, Champions, NFL y NBA. Solo se ofrecen deportes y ligas con feed configurado.
+
+En vivo se consulta cada 10 segundos; en otras condiciones, cada 60 segundos. El detalle conserva la última respuesta en caso de fallo y muestra que no se pudo actualizar. Es un servicio externo: su frecuencia de publicación y disponibilidad no dependen de Chokxen.

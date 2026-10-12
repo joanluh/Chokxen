@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { TeamBadge } from './UI.jsx';
 import { fetchMatchSummary } from '../services/match-summary.js';
 
-export default function MatchDetails({ match, user }) {
+export default function MatchDetails({ match }) {
   const [state, setState] = useState(() => ({ summary: null, loading: match.source === 'ESPN', error: '' }));
   const [revision, setRevision] = useState(0);
   useEffect(() => {
@@ -43,9 +43,6 @@ export default function MatchDetails({ match, user }) {
         {summary.venue && <p className="muted small">Estadio: {summary.venue}</p>}
       </>}
       <p className="small muted">Fuente: ESPN. La información en vivo puede llegar con retraso.</p>
-    </div> : <>
-      {match.probabilities && (user.plan === 'Premium' || user.role === 'Administrador') && <div className="summary-lines">{[match.home, 'Empate', match.away].map((label, index) => <p key={label}><span>{label}</span><strong>{match.probabilities[index]}%</strong></p>)}</div>}
-      <p className="muted">Encuentro de demostración. Sus marcadores y predicciones son ficticios.</p><p className="small muted">Los goleadores y las estadísticas reales están disponibles en los encuentros identificados como ESPN.</p>
-    </>}
+    </div> : null}
   </>;
 }

@@ -1,20 +1,28 @@
-import { useEffect, useState } from 'react';
-import { Icon, Empty } from '../components/UI.jsx';
-
-export default function Library({ client, data, query, onRetry }) {
-  const [results, setResults] = useState(null), [error, setError] = useState(''), [detail, setDetail] = useState(null);
+import { useEffect, useRef, useState } from 'react';
+import { Icon, Modal, TeamBadge } from '../components/UI.jsx';
+const definitions = [['ligas', 'Ligas', 'league', 'idLiga'], ['equipos', 'Equipos', 'team', 'equipoId'], ['jugadores', 'Jugadores', 'player', 'idJugador']];
+const names = { ligas: row => row.nombreLiga, equipos: row => row.nombreEquipo, jugadores: row => [row.nombreJugador, row.apellido].filter(Boolean).join(' ') };
+const labels = { nombreLiga: 'Liga', nombreEquipo: 'Equipo', nombreJugador: 'Nombre', apellido: 'Apellido', apodo: 'Apodo', posicion: 'Posición', numeroDeCamiseta: 'Camiseta', fechaFundacion: 'Fundación', temporadaActual: 'Temporada', tipo: 'Tipo' };
+export default function Library({ client, data, query, onClear, onRetry }) {
+  const [filter, setFilter] = useState('todos'), [state, setState] = useState({ query: '', results: null, error: '', loading: false });
+  const [revision, setRevision] = useState(0), [detail, setDetail] = useState(null);
+  const detailVersion = useRef(0);
+  const value = query.trim();
   useEffect(() => {
-    let active = true; setResults(null); setError(''); setDetail(null);
-    if (query.trim().length < 3) return;
-    const timer = setTimeout(() => client.search(query).then(value => { if (active) setResults(value); }).catch(failure => { if (active) setError(failure.message); }), 300);
-    return () => { active = false; clearTimeout(timer); };
-  }, [query, client]);
-  async function open(kind, id) { setError(''); try { setDetail({ kind, row: await client.detail(kind, id) }); } catch (failure) { setError(failure.message); } }
-  const labels = { nombreLiga: 'Liga', nombreEquipo: 'Equipo', nombreJugador: 'Nombre', apellido: 'Apellido', apodo: 'Apodo', posicion: 'Posición', numeroDeCamiseta: 'Número de camiseta', fechaFundacion: 'Fundación', temporadaActual: 'Temporada', tipo: 'Tipo' };
-  const groups = [
-    ['league', 'Ligas', results?.ligas || data.leagues, 'idLiga', row => row.nombreLiga],
-    ['team', 'Equipos', results?.equipos || data.teams, 'equipoId', row => row.nombreEquipo],
-    ['player', 'Jugadores', results?.jugadores || data.players, 'idJugador', row => `${row.nombreJugador} ${row.apellido}`.trim()],
-  ];
-  return <section className="panel library-panel"><div className="section-heading"><div><span className="eyebrow muted">CATÁLOGO DE CHOKXEN</span><h2>{query.trim().length >= 3 ? 'Búsqueda en el servidor' : 'Ligas, equipos y jugadores'}</h2></div><button className="text-button" onClick={onRetry}>Actualizar</button></div><p className="muted small">Consulta los registros del backend. Usa el buscador superior para buscar nombres de tres caracteres o más.</p>{error && <p className="form-error" role="alert">{error}</p>}{detail && <div className="catalog-detail"><div className="section-heading"><h3>Detalle del registro</h3><button className="icon-button" aria-label="Cerrar detalle" onClick={() => setDetail(null)}><Icon name="close"/></button></div><dl>{Object.entries(detail.row).filter(([label,value]) => labels[label] && value != null && typeof value !== 'object').map(([label,value]) => <div key={label}><dt>{labels[label]}</dt><dd>{String(value)}</dd></div>)}</dl></div>}<div className="catalog-columns">{groups.map(([kind, label, rows, id, name]) => <section key={kind}><h3>{label} <small>({rows.length})</small></h3>{rows.length ? <ul>{rows.map(row => <li key={row[id]}><button className="text-button" onClick={() => open(kind, row[id])}>{name(row)} <Icon name="chevron" size={15}/></button></li>)}</ul> : <Empty title="Sin registros"/>}</section>)}</div></section>;
+    let active = true; ++detailVersion.current; setDetail(null);
+    setState({ query: value, results: null, error: '', loading: value.length >= 3 });
+    if (value.length < 3) return;
+    const timer = setTimeout(() => client.search(value).then(results => { if (active) setState({ query: value, results, error: '', loading: false }); }).catch(failure => { if (active) setState({ query: value, results: null, error: failure.message, loading: false }); }), 250);
+    return () => { active = false; ++detailVersion.current; clearTimeout(timer); };
+  }, [value, client, revision]);
+  const pending = value.length >= 3 && (state.query !== value || state.loading);
+  const source = value ? (state.query === value ? state.results : null) : { ligas: data.leagues, equipos: data.teams, jugadores: data.players };
+  const groups = definitions.filter(([key]) => filter === 'todos' || filter === key);
+  const count = groups.reduce((total, [key]) => total + (source?.[key]?.length || 0), 0);
+  async function open(kind, id, name) {
+    const generation = ++detailVersion.current; setDetail({ name, loading: true });
+    try { const row = await client.detail(kind, id); if (generation === detailVersion.current) setDetail({ name, row }); }
+    catch (failure) { if (generation === detailVersion.current) setDetail({ name, error: failure.message }); }
+  }
+  return <section><div className="page-heading"><div><h1>Catálogo</h1><p className="muted">Ligas, equipos y jugadores de Chokxen.</p></div><button className="text-button" disabled={data.loading || pending} onClick={() => value.length >= 3 ? setRevision(current => current + 1) : onRetry()}>{value.length >= 3 ? 'Buscar de nuevo' : 'Actualizar catálogo'}</button></div><div className="filter-bar" aria-label="Filtrar catálogo">{[['todos', 'Todos'], ...definitions.map(([key, title]) => [key, title])].map(([key, title]) => <button key={key} aria-pressed={filter === key} className={filter === key ? 'selected' : ''} onClick={() => setFilter(key)}>{title}</button>)}</div>{value && <div className="search-summary"><span>Buscando «{value}»</span><button className="text-button" onClick={onClear}>Limpiar búsqueda <Icon name="close" size={16}/></button></div>}{value.length > 0 && value.length < 3 ? <div className="empty"><Icon name="search"/><h2>Escribe al menos 3 caracteres</h2><p className="muted">Puedes buscar por nombre de liga, equipo, jugador o apodo.</p></div> : pending || !value && data.loading ? <div className="skeleton-list" role="status" aria-label="Consultando catálogo">{[1,2,3].map(key => <div className="skeleton" key={key}/>)}</div> : (value ? state.error : data.error) ? <div className="form-error" role="alert">{value ? state.error : data.error}<p>No pudimos consultar el catálogo. Inténtalo de nuevo.</p><button className="button secondary" onClick={() => value ? setRevision(current => current + 1) : onRetry()}>Reintentar</button></div> : <><p className="muted small" role="status">{count} {count === 1 ? 'registro' : 'registros'}</p>{count ? groups.map(([key, title, kind, id]) => source?.[key]?.length ? <section className="catalog-group" key={key}><h2>{title} <span className="count">{source[key].length}</span></h2><ul className="catalog-list">{source[key].map(row => <li key={row[id]}><button onClick={() => open(kind, row[id], names[key](row))}>{key === 'equipos' && <TeamBadge name={row.nombreEquipo}/>}<span><strong>{names[key](row)}</strong><small>{key === 'jugadores' ? [row.nombreEquipo || data.teams.find(team => team.equipoId === row.idEquipo)?.nombreEquipo, row.posicion].filter(Boolean).join(' · ') : key === 'equipos' ? row.nombreLiga || data.leagues.find(league => league.idLiga === row.ligaId)?.nombreLiga : row.temporadaActual}</small></span><Icon name="chevron"/></button></li>)}</ul></section> : null) : <div className="empty"><Icon name="search"/><h2>{value ? 'No hay coincidencias' : 'El catálogo está vacío'}</h2><p className="muted">{value ? 'Prueba otro nombre o cambia los filtros.' : 'Los registros aparecerán cuando estén disponibles en Chokxen.'}</p>{value && <button className="button secondary" onClick={onClear}>Ver catálogo completo</button>}</div>}</>}{detail && <Modal title={detail.name} onClose={() => { ++detailVersion.current; setDetail(null); }}>{detail.loading ? <div className="skeleton" role="status" aria-label="Cargando detalle"/> : detail.error ? <p className="form-error" role="alert">{detail.error}</p> : <dl className="detail-list">{Object.entries(detail.row).filter(([key, value]) => labels[key] && value != null && typeof value !== 'object').map(([key, value]) => <div key={key}><dt>{labels[key]}</dt><dd>{String(value)}</dd></div>)}</dl>}</Modal>}</section>;
 }

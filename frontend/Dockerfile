@@ -3,9 +3,7 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci --ignore-scripts --no-audit --no-fund
 COPY . .
-ARG VITE_ENABLE_DEMO=true
 ENV VITE_DATA_MODE=api VITE_API_URL=/api/v1 VITE_SPORTS_MODE=espn
-ENV VITE_ENABLE_DEMO=${VITE_ENABLE_DEMO}
 RUN npm run build
 
 FROM nginx:stable-alpine

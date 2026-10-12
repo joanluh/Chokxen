@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { createAuthClient } from '../src/services/auth-client.js';
 const schema = JSON.parse(readFileSync(new URL('../contracts/openapi.json', import.meta.url)));
-const me = { correo: 'prueba@example.test', nombreUsuario: 'Usuario Prueba', rol: 'Cliente', plan: 'Premium' };
+const me = { id: 17, correo: 'prueba@example.test', nombreUsuario: 'Usuario Prueba', rol: 'Cliente', plan: 'Premium' };
 const json = (body, status = 200) => new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
 function setup(handler, initial) {
   const saved = new Map(initial ? [['chokxen:session', JSON.stringify(initial)]] : []);
@@ -30,7 +30,7 @@ test('login usa formulario OAuth y obtiene perfil real con Bearer', async () => 
 test('registro usa el esquema y fija Cliente aunque el formulario intente otro rol', async () => {
   const context = setup(path => path.endsWith('/register') ? json({}, 201) : path.endsWith('/login') ? json({ access_token: 'token' }) : json(me));
   const user = await context.client.register({ name: ' Usuario Prueba ', email: 'PRUEBA@example.test', password: 'Secret123!', plan: 'Premium', role: 'Administrador' });
-  assert.deepEqual(JSON.parse(context.calls[0].options.body), { correo: me.correo, password: 'Secret123!', nombreUsuario: 'Usuario Prueba', rol: 'Cliente', plan: 'Premium' });
+  assert.deepEqual(JSON.parse(context.calls[0].options.body), { correo: me.correo, password: 'Secret123!', nombreUsuario: 'Usuario Prueba', rol: 'Cliente', plan: 'Basico' });
   assert.equal(user.onboarded, false);
 });
 test('un 401 de login no intenta renovar una sesión anterior', async () => {
@@ -62,12 +62,26 @@ test('401 de perfil renueva por refreshToken y reintenta con el token nuevo', as
 test('restauraciones simultáneas comparten consulta y renovación', async () => {
   const context = setup((path, options) => path.endsWith('/refresh') ? json({ access_token: 'new' }) : options.headers.Authorization === 'Bearer old' ? json({}, 401) : json(me), { accessToken: 'old', refreshToken: 'refresh' });
   const users = await Promise.all([context.client.restore(), context.client.restore()]);
-  assert.equal(users[0].email, users[1].email); assert.equal(context.calls.length, 3);
+  assert.equal(users[0].email, users[1].email); assert.equal(context.calls.length, 4);
 });
 test('refresh rechazado limpia sesión y avisa de la caducidad', async () => {
   const context = setup(() => json({}, 401), { accessToken: 'old', refreshToken: 'refresh' });
   await assert.rejects(context.client.restore(), /sesión terminó/);
   assert.equal(context.saved.size, 0); assert.equal(context.expired(), 1);
+});
+test('una renovación sin ID verificado pide login y elimina los tokens', async () => {
+  const context = setup((path, options) => path.endsWith('/refresh') ? json({ accessToken: 'new' }) : options.headers.Authorization === 'Bearer old' ? json({}, 401) : json({ usuario: { ...me, id: null } }), { accessToken: 'old', refreshToken: 'refresh' });
+  await assert.rejects(context.client.restore(), /renovar tu sesión/);
+  assert.equal(context.saved.size, 0); assert.equal(context.expired(), 1);
+});
+test('un perfil sin ID válido no abre el frontend con un usuario incompleto', async () => {
+  const context = setup(path => path.endsWith('/login') ? json({ access_token: 'access' }) : json({ ...me, id: null }));
+  await assert.rejects(context.client.login(me.correo, 'Secret123!'), /ID de usuario válido/);
+  assert.equal(context.saved.size, 0);
+});
+test('límite de intentos muestra una espera clara', async () => {
+  const context = setup(() => json({ detail: 'Rate limit exceeded' }, 429));
+  await assert.rejects(context.client.login(me.correo, 'Secret123!'), /Espera un minuto/);
 });
 test('logout usa Bearer y borra la sesión incluso si el servidor falla', async () => {
   const context = setup(() => json({}, 500), { accessToken: 'access' });
