@@ -3,6 +3,7 @@ from dotenv import load_dotenv
 
 # Cargar las variables del archivo .env
 load_dotenv()
+JWT_SECRET = os.getenv("JWT_SECRET")
 
 
 DATABASE_URL = os.getenv(

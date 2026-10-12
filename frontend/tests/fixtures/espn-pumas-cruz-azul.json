@@ -1,0 +1,714 @@
+{
+  "header": {
+    "id": "401876947",
+    "competitions": [
+      {
+        "competitors": [
+          {
+            "id": "233",
+            "homeAway": "home",
+            "score": "3",
+            "team": {
+              "id": "233",
+              "displayName": "Pumas UNAM"
+            }
+          },
+          {
+            "id": "218",
+            "homeAway": "away",
+            "score": "3",
+            "team": {
+              "id": "218",
+              "displayName": "Cruz Azul"
+            }
+          }
+        ],
+        "status": {
+          "type": {
+            "id": "28",
+            "name": "STATUS_FULL_TIME",
+            "state": "post",
+            "completed": true,
+            "description": "Full Time",
+            "detail": "FT",
+            "shortDetail": "FT"
+          }
+        },
+        "details": [
+          {
+            "clock": {
+              "value": 581,
+              "displayValue": "10'"
+            },
+            "addedClock": {
+              "value": 0,
+              "displayValue": ""
+            },
+            "scoringPlay": true,
+            "team": {
+              "id": "233"
+            },
+            "participants": [
+              {
+                "athlete": {
+                  "id": "239983",
+                  "displayName": "Juninho"
+                }
+              },
+              {
+                "athlete": {
+                  "id": "265969",
+                  "displayName": "César Huerta"
+                }
+              }
+            ],
+            "ownGoal": false,
+            "penaltyKick": false
+          },
+          {
+            "clock": {
+              "value": 945,
+              "displayValue": "16'"
+            },
+            "addedClock": {
+              "value": 0,
+              "displayValue": ""
+            },
+            "scoringPlay": true,
+            "team": {
+              "id": "233"
+            },
+            "participants": [
+              {
+                "athlete": {
+                  "id": "265969",
+                  "displayName": "César Huerta"
+                }
+              },
+              {
+                "athlete": {
+                  "id": "239983",
+                  "displayName": "Juninho"
+                }
+              }
+            ],
+            "ownGoal": false,
+            "penaltyKick": false
+          },
+          {
+            "clock": {
+              "value": 2175,
+              "displayValue": "37'"
+            },
+            "addedClock": {
+              "value": 0,
+              "displayValue": ""
+            },
+            "scoringPlay": false,
+            "team": {
+              "id": "233"
+            },
+            "participants": [
+              {
+                "athlete": {
+                  "id": "265969",
+                  "displayName": "César Huerta"
+                }
+              }
+            ],
+            "ownGoal": false,
+            "penaltyKick": false
+          },
+          {
+            "clock": {
+              "value": 2700,
+              "displayValue": "45'+3'"
+            },
+            "addedClock": {
+              "value": 162,
+              "displayValue": "3"
+            },
+            "scoringPlay": true,
+            "team": {
+              "id": "218"
+            },
+            "participants": [
+              {
+                "athlete": {
+                  "id": "219001",
+                  "displayName": "Agustín Palavecino"
+                }
+              },
+              {
+                "athlete": {
+                  "id": "407543",
+                  "displayName": "Jorge Rodarte"
+                }
+              }
+            ],
+            "ownGoal": false,
+            "penaltyKick": false
+          },
+          {
+            "clock": {
+              "value": 2930,
+              "displayValue": "49'"
+            },
+            "addedClock": {
+              "value": 0,
+              "displayValue": ""
+            },
+            "scoringPlay": true,
+            "team": {
+              "id": "233"
+            },
+            "participants": [
+              {
+                "athlete": {
+                  "id": "255942",
+                  "displayName": "Robert Morales"
+                }
+              }
+            ],
+            "ownGoal": false,
+            "penaltyKick": false
+          },
+          {
+            "clock": {
+              "value": 3837,
+              "displayValue": "64'"
+            },
+            "addedClock": {
+              "value": 0,
+              "displayValue": ""
+            },
+            "scoringPlay": true,
+            "team": {
+              "id": "218"
+            },
+            "participants": [
+              {
+                "athlete": {
+                  "id": "336641",
+                  "displayName": "Andres Montaño"
+                }
+              }
+            ],
+            "ownGoal": false,
+            "penaltyKick": false
+          },
+          {
+            "clock": {
+              "value": 5073,
+              "displayValue": "85'"
+            },
+            "addedClock": {
+              "value": 0,
+              "displayValue": ""
+            },
+            "scoringPlay": true,
+            "team": {
+              "id": "218"
+            },
+            "participants": [
+              {
+                "athlete": {
+                  "id": "228300",
+                  "displayName": "Osinachi Ebere"
+                }
+              },
+              {
+                "athlete": {
+                  "id": "207549",
+                  "displayName": "Nicolás Ibáñez"
+                }
+              }
+            ],
+            "ownGoal": false,
+            "penaltyKick": false
+          }
+        ]
+      }
+    ]
+  },
+  "boxscore": {
+    "teams": [
+      {
+        "team": {
+          "id": "233"
+        },
+        "statistics": [
+          {
+            "name": "foulsCommitted",
+            "displayValue": "5",
+            "label": "Fouls"
+          },
+          {
+            "name": "yellowCards",
+            "displayValue": "0",
+            "label": "Yellow Cards"
+          },
+          {
+            "name": "redCards",
+            "displayValue": "1",
+            "label": "Red Cards"
+          },
+          {
+            "name": "offsides",
+            "displayValue": "2",
+            "label": "Offsides"
+          },
+          {
+            "name": "wonCorners",
+            "displayValue": "4",
+            "label": "Corner Kicks"
+          },
+          {
+            "name": "saves",
+            "displayValue": "3",
+            "label": "Saves"
+          },
+          {
+            "name": "possessionPct",
+            "displayValue": "31.7",
+            "label": "Possession"
+          },
+          {
+            "name": "totalShots",
+            "displayValue": "9",
+            "label": "SHOTS"
+          },
+          {
+            "name": "shotsOnTarget",
+            "displayValue": "5",
+            "label": "ON GOAL"
+          },
+          {
+            "name": "shotPct",
+            "displayValue": "0.6",
+            "label": "On Target %"
+          },
+          {
+            "name": "penaltyKickGoals",
+            "displayValue": "0",
+            "label": "Penalty Goals"
+          },
+          {
+            "name": "penaltyKickShots",
+            "displayValue": "0",
+            "label": "Penalty Kicks Taken"
+          },
+          {
+            "name": "accuratePasses",
+            "displayValue": "174",
+            "label": "Accurate Passes"
+          },
+          {
+            "name": "totalPasses",
+            "displayValue": "238",
+            "label": "Passes"
+          },
+          {
+            "name": "passPct",
+            "displayValue": "0.7",
+            "label": "Pass Completion %"
+          },
+          {
+            "name": "accurateCrosses",
+            "displayValue": "4",
+            "label": "Accurate Crosses"
+          },
+          {
+            "name": "totalCrosses",
+            "displayValue": "13",
+            "label": "Crosses"
+          },
+          {
+            "name": "crossPct",
+            "displayValue": "0.3",
+            "label": "Cross %"
+          },
+          {
+            "name": "totalLongBalls",
+            "displayValue": "60",
+            "label": "Long Balls"
+          },
+          {
+            "name": "accurateLongBalls",
+            "displayValue": "25",
+            "label": "Accurate Long Balls"
+          },
+          {
+            "name": "longballPct",
+            "displayValue": "0.4",
+            "label": "Long Balls %"
+          },
+          {
+            "name": "blockedShots",
+            "displayValue": "1",
+            "label": "Blocked Shots"
+          },
+          {
+            "name": "effectiveTackles",
+            "displayValue": "5",
+            "label": "Effective Tackles"
+          },
+          {
+            "name": "totalTackles",
+            "displayValue": "6",
+            "label": "Tackles"
+          },
+          {
+            "name": "tacklePct",
+            "displayValue": "0.8",
+            "label": "Tackle %"
+          },
+          {
+            "name": "interceptions",
+            "displayValue": "4",
+            "label": "Interceptions"
+          },
+          {
+            "name": "effectiveClearance",
+            "displayValue": "41",
+            "label": "Effective Clearances"
+          },
+          {
+            "name": "totalClearance",
+            "displayValue": "41",
+            "label": "Clearances"
+          }
+        ]
+      },
+      {
+        "team": {
+          "id": "218"
+        },
+        "statistics": [
+          {
+            "name": "foulsCommitted",
+            "displayValue": "11",
+            "label": "Fouls"
+          },
+          {
+            "name": "yellowCards",
+            "displayValue": "1",
+            "label": "Yellow Cards"
+          },
+          {
+            "name": "redCards",
+            "displayValue": "0",
+            "label": "Red Cards"
+          },
+          {
+            "name": "offsides",
+            "displayValue": "3",
+            "label": "Offsides"
+          },
+          {
+            "name": "wonCorners",
+            "displayValue": "6",
+            "label": "Corner Kicks"
+          },
+          {
+            "name": "saves",
+            "displayValue": "2",
+            "label": "Saves"
+          },
+          {
+            "name": "possessionPct",
+            "displayValue": "68.3",
+            "label": "Possession"
+          },
+          {
+            "name": "totalShots",
+            "displayValue": "30",
+            "label": "SHOTS"
+          },
+          {
+            "name": "shotsOnTarget",
+            "displayValue": "6",
+            "label": "ON GOAL"
+          },
+          {
+            "name": "shotPct",
+            "displayValue": "0.2",
+            "label": "On Target %"
+          },
+          {
+            "name": "penaltyKickGoals",
+            "displayValue": "0",
+            "label": "Penalty Goals"
+          },
+          {
+            "name": "penaltyKickShots",
+            "displayValue": "0",
+            "label": "Penalty Kicks Taken"
+          },
+          {
+            "name": "accuratePasses",
+            "displayValue": "452",
+            "label": "Accurate Passes"
+          },
+          {
+            "name": "totalPasses",
+            "displayValue": "510",
+            "label": "Passes"
+          },
+          {
+            "name": "passPct",
+            "displayValue": "0.9",
+            "label": "Pass Completion %"
+          },
+          {
+            "name": "accurateCrosses",
+            "displayValue": "7",
+            "label": "Accurate Crosses"
+          },
+          {
+            "name": "totalCrosses",
+            "displayValue": "37",
+            "label": "Crosses"
+          },
+          {
+            "name": "crossPct",
+            "displayValue": "0.2",
+            "label": "Cross %"
+          },
+          {
+            "name": "totalLongBalls",
+            "displayValue": "42",
+            "label": "Long Balls"
+          },
+          {
+            "name": "accurateLongBalls",
+            "displayValue": "25",
+            "label": "Accurate Long Balls"
+          },
+          {
+            "name": "longballPct",
+            "displayValue": "0.6",
+            "label": "Long Balls %"
+          },
+          {
+            "name": "blockedShots",
+            "displayValue": "8",
+            "label": "Blocked Shots"
+          },
+          {
+            "name": "effectiveTackles",
+            "displayValue": "8",
+            "label": "Effective Tackles"
+          },
+          {
+            "name": "totalTackles",
+            "displayValue": "10",
+            "label": "Tackles"
+          },
+          {
+            "name": "tacklePct",
+            "displayValue": "0.8",
+            "label": "Tackle %"
+          },
+          {
+            "name": "interceptions",
+            "displayValue": "9",
+            "label": "Interceptions"
+          },
+          {
+            "name": "effectiveClearance",
+            "displayValue": "14",
+            "label": "Effective Clearances"
+          },
+          {
+            "name": "totalClearance",
+            "displayValue": "14",
+            "label": "Clearances"
+          }
+        ]
+      }
+    ]
+  },
+  "keyEvents": [
+    {
+      "id": "53541169",
+      "clock": {
+        "value": 581,
+        "displayValue": "10'"
+      },
+      "type": {
+        "id": "70",
+        "text": "Goal",
+        "type": "goal"
+      },
+      "scoringPlay": true,
+      "shootout": false,
+      "team": {
+        "id": "233",
+        "displayName": "Pumas UNAM"
+      },
+      "participants": [
+        {
+          "athlete": {
+            "id": "239983",
+            "displayName": "Juninho"
+          }
+        },
+        {
+          "athlete": {
+            "id": "265969",
+            "displayName": "César Huerta"
+          }
+        }
+      ]
+    },
+    {
+      "id": "53541439",
+      "clock": {
+        "value": 945,
+        "displayValue": "16'"
+      },
+      "type": {
+        "id": "70",
+        "text": "Goal",
+        "type": "goal"
+      },
+      "scoringPlay": true,
+      "shootout": false,
+      "team": {
+        "id": "233",
+        "displayName": "Pumas UNAM"
+      },
+      "participants": [
+        {
+          "athlete": {
+            "id": "265969",
+            "displayName": "César Huerta"
+          }
+        },
+        {
+          "athlete": {
+            "id": "239983",
+            "displayName": "Juninho"
+          }
+        }
+      ]
+    },
+    {
+      "id": "53542523",
+      "clock": {
+        "value": 2700,
+        "displayValue": "45'+3'"
+      },
+      "type": {
+        "id": "70",
+        "text": "Goal",
+        "type": "goal"
+      },
+      "scoringPlay": true,
+      "shootout": false,
+      "team": {
+        "id": "218",
+        "displayName": "Cruz Azul"
+      },
+      "participants": [
+        {
+          "athlete": {
+            "id": "219001",
+            "displayName": "Agustín Palavecino"
+          }
+        },
+        {
+          "athlete": {
+            "id": "407543",
+            "displayName": "Jorge Rodarte"
+          }
+        }
+      ]
+    },
+    {
+      "id": "53542956",
+      "clock": {
+        "value": 2930,
+        "displayValue": "49'"
+      },
+      "type": {
+        "id": "70",
+        "text": "Goal",
+        "type": "goal"
+      },
+      "scoringPlay": true,
+      "shootout": false,
+      "team": {
+        "id": "233",
+        "displayName": "Pumas UNAM"
+      },
+      "participants": [
+        {
+          "athlete": {
+            "id": "255942",
+            "displayName": "Robert Morales"
+          }
+        }
+      ]
+    },
+    {
+      "id": "53543374",
+      "clock": {
+        "value": 3837,
+        "displayValue": "64'"
+      },
+      "type": {
+        "id": "70",
+        "text": "Goal",
+        "type": "goal"
+      },
+      "scoringPlay": true,
+      "shootout": false,
+      "team": {
+        "id": "218",
+        "displayName": "Cruz Azul"
+      },
+      "participants": [
+        {
+          "athlete": {
+            "id": "336641",
+            "displayName": "Andres Montaño"
+          }
+        }
+      ]
+    },
+    {
+      "id": "53543907",
+      "clock": {
+        "value": 5073,
+        "displayValue": "85'"
+      },
+      "type": {
+        "id": "70",
+        "text": "Goal",
+        "type": "goal"
+      },
+      "scoringPlay": true,
+      "shootout": false,
+      "team": {
+        "id": "218",
+        "displayName": "Cruz Azul"
+      },
+      "participants": [
+        {
+          "athlete": {
+            "id": "228300",
+            "displayName": "Osinachi Ebere"
+          }
+        },
+        {
+          "athlete": {
+            "id": "207549",
+            "displayName": "Nicolás Ibáñez"
+          }
+        }
+      ]
+    }
+  ]
+}

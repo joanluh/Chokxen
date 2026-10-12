@@ -1,10 +1,12 @@
 services:
   frontend:
-    build: .
+    build:
+      context: .
+      args:
+        VITE_ENABLE_DEMO: "true"
     ports:
       - "127.0.0.1:5173:5173"
     environment:
-      VITE_DATA_MODE: api
-      VITE_API_URL: /api/v1
-      BACKEND_URL: http://100.75.117.118:8080
-      VITE_SPORTS_MODE: espn
+      BACKEND_URL: http://host.docker.internal:8080
+    extra_hosts:
+      - "host.docker.internal:host-gateway"

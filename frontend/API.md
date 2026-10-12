@@ -1,65 +1,53 @@
-# Conexión local de Chokxen
+# Integración API de Chokxen
 
-El formulario inicia en modo API para cuentas reales; a su lado aparecen los botones Básico, Premium y Administrador, que no necesitan servidor. `VITE_ENABLE_DEMO=false` los oculta en modo API. El HTML independiente fuerza modo demo para funcionar sin red. El backend indicado es `http://100.75.117.118:8080`, accesible con Tailscale conectado. Vite reenvía `/api/*` a ese servidor; el navegador utiliza el mismo origen del frontend. La dirección se puede cambiar con `BACKEND_URL` en `.env.local`. Este proxy está configurado tanto para desarrollo como para `npm run preview` y solo escucha en la máquina local.
+El formulario real usa `/api/v1` en el mismo origen. Vite reenvía las solicitudes a `BACKEND_URL`, por defecto `http://127.0.0.1:8080`. Para VPN configura `http://100.75.117.118:8080` en `.env.local` y reinicia Vite. El servidor debe estar activo para utilizar cuentas reales; las tres demos no dependen de él.
 
-```env
-VITE_DATA_MODE=api
-VITE_ENABLE_DEMO=true
-VITE_API_URL=/api/v1
-BACKEND_URL=http://100.75.117.118:8080
-VITE_SPORTS_MODE=espn
-```
+Todas las solicitudes de backend llevan `Heart: CHOKXEN SPORT` y `Chokxen-SPORT: true`. Las protegidas también incluyen Bearer. Los marcadores ESPN se consultan directamente y no reciben tokens de usuario ni estos encabezados.
 
-Ejecuta `npm run dev`. Abre `http://127.0.0.1:5173`. El formulario permite entrar con una cuenta existente o registrarse y seleccionar favoritos. Al publicar algún día como archivos estáticos, el servidor que entregue el frontend deberá reenviar `/api`, o se tendrá que configurar `VITE_API_URL` con la URL completa de un backend que admita ese origen. Aún no hay publicación.
+| Acción | Método y ruta | Datos |
+| --- | --- | --- |
+| Registro | POST `/api/v1/auth/register` | JSON `correo`, `password`, `nombreUsuario`, `rol: Cliente`, `plan` |
+| Login | POST `/api/v1/auth/login` | URL encoded `username`, `password`, `grant_type: password` |
+| Perfil | GET `/api/v1/usuarios/me` | Bearer |
+| Renovación | POST `/api/v1/auth/refresh` | Header `refreshToken` |
+| Cierre | POST `/api/v1/auth/logout` | Bearer |
+| Favoritos | GET / POST `/api/v1/favoritos/` | POST JSON `tipoFavorito`, `elementoId`; Bearer |
+| Eliminar favorito | DELETE `/api/v1/favoritos/{idPreferenciasUsuario}` | Bearer; ID de preferencia |
+| Ligas y detalle | GET `/api/v1/competiciones/`, `/api/v1/competiciones/{id}` | Bearer |
+| Equipos y detalle | GET `/api/v1/equipos/`, `/api/v1/equipos/{equipoId}` | Bearer |
+| Jugadores y detalle | GET `/api/v1/jugadores/`, `/api/v1/jugadores/{idJugador}` | Bearer |
+| Búsqueda | GET `/api/v1/busqueda/?q=...` | Bearer; mínimo tres caracteres |
 
-## Solicitudes del documento
+## Respuestas comprobadas
 
-| Acción | Solicitud |
-| --- | --- |
-| Registro | `POST /api/v1/auth/register`, JSON con `correo`, `password`, `nombreUsuario`, `rol: Cliente`, `plan` |
-| Login | `POST /api/v1/auth/login`, formulario URL encoded con `username` y `password` |
-| Perfil | `GET /api/v1/usuarios/me`, `Authorization: Bearer <access token>` |
-| Renovación | `POST /api/v1/auth/refresh`, encabezado `refreshToken` |
-| Logout | `POST /api/v1/auth/logout`, Bearer |
+Login devuelve `access_token`, `refreshToken` y `token_type`. Refresh devuelve `accessToken` y `tokenType`; si no rota refreshToken, el cliente conserva el anterior. El adaptador admite también las variantes en snake_case.
 
-El contrato original se conserva en `contracts/openapi.json`. El backend respondió HTTP 200 en `/openapi.json` y HTTP 401 al consultar el perfil sin token. Las pruebas de registro, login, perfil, renovación y logout utilizan un servidor simulado local y no crean usuarios de prueba en la VPN.
+Perfil devuelve `{ mensaje, usuario: { correo, id, rol, plan, nombreUsuario } }`. El adaptador lee `usuario` y conserva compatibilidad con el perfil en la raíz. Comprueba el perfil antes de permitir la entrada; nunca deduce el rol del formulario. Un fallo de perfil elimina los tokens locales.
 
-## Respuestas que faltan en OpenAPI
+Registro duplicado y credenciales incorrectas pueden devolver 400 con `detail`. Se presentan errores del contrato sin revelar inputs de validación ni detalles internos de errores 500. Tokens se conservan en sessionStorage y se eliminan al cerrar sesión. Una respuesta 401 permite renovar una vez; un rechazo del refresh termina la sesión local.
 
-El documento tiene esquemas `{}` en las respuestas exitosas. El adaptador admite los siguientes campos habituales, **pendientes de contrastar con una sesión real**:
+## Favoritos y onboarding
 
-```json
-{"access_token":"...","refresh_token":"..."}
-```
+El onboarding real carga ligas, equipos y jugadores de las rutas actuales y guarda preferencias con IDs de esos catálogos. La carga recupera los favoritos del servidor. Guardar agrega antes de eliminar, evita duplicados y elimina utilizando el ID de preferencia del backend. Un error se muestra y mantiene la bienvenida abierta; las rutas no ofrecen una transacción para todo el conjunto, por lo que una escritura parcialmente completada debe reconsultarse.
 
-También admite `accessToken` / `refreshToken`. `access_token` es obligatorio para entrar. Si no viene un refresh token, la cuenta puede iniciar sesión, pero deberá volver a entrar cuando caduque el acceso. Si refresh no rota su token, se conserva el anterior.
+No existe una ruta específica de onboarding. La finalización sin preferencias se recuerda por correo en el navegador; los favoritos se almacenan en el servidor. Las demos guardan todo localmente. Los permisos reales siempre corresponden al backend.
 
-```json
-{"correo":"usuario@ejemplo.com","nombreUsuario":"Usuario","rol":"Cliente","plan":"Basico"}
-```
+## ESPN y simulaciones
 
-El perfil debe incluir `correo` o `email`. Se admiten `nombreUsuario` / `name`, `rol` / `role`; a falta de nombre se muestra la parte inicial del correo. Solo se presenta Administrador cuando el perfil lo indica expresamente; ante un rol/plan desconocido la interfaz muestra Cliente/Básico. Los permisos de operaciones reales siempre corresponden al backend. No se deducen privilegios de la contraseña, del correo ni del formulario.
-
-Los tokens se conservan en `sessionStorage` para recuperar la sesión de la pestaña al recargar; nunca se guardan contraseñas de API en el navegador. Una respuesta 401 intenta renovar una vez y reconsultar el perfil. Un refresh rechazado elimina la sesión local. Logout intenta cerrar la sesión en el servidor y elimina siempre los tokens locales. No existe una ruta de recuperación de contraseña en el contrato; el botón informa que todavía no está disponible.
-
-Los favoritos permanecen locales porque el contrato no define una ruta para guardarlos. Tienda, créditos, apuestas y predicciones conservan sus datos de simulación.
-
-## ESPN
-
-Inicio y Resultados consultan directamente el marcador público de ESPN sin clave, usando `site.api.espn.com/apis/site/v2/sports`. El adaptador incluye Liga MX, Premier League, LaLiga, Champions, NFL y NBA. Tenis muestra falta de cobertura ESPN. En las experiencias demo se muestran encuentros ficticios de ATP en una sección separada, marcada como ejemplo. Las fechas y horarios se convierten a Ciudad de México. Se muestran escudos recibidos de ESPN, con alternativa si una imagen falla.
-
-La página consulta cada 10 segundos cuando hay un encuentro en vivo hoy y cada minuto en los demás casos; pausa consultas mientras la pestaña esté oculta. **Esto no garantiza que un gol llegue en 10 segundos**: depende de la actualización de ESPN. El endpoint no ofrece aquí un contrato de disponibilidad, cuota ni latencia. Un error conserva la última consulta identificándola como desactualizada; un día vacío informa que ESPN no tiene encuentros. Las experiencias demo agregan 42 ejemplos aleatorios identificados, separados por fuente y sin alterar las respuestas ESPN; las cuentas API solo ven ESPN en Inicio y Resultados. No se generan momios ni probabilidades a partir de este marcador.
-
-Para simular también el formulario y registro usa `VITE_DATA_MODE=demo`. En cualquier modo con demos habilitadas, los tres perfiles se abren con botones, se guardan en sessionStorage y pueden cambiarse desde Cambiar perfil. Estos perfiles no emiten tokens ni permisos del servidor. El registro ficticio solo conserva cuentas en memoria hasta recargar. Para datos deportivos ficticios también: `VITE_SPORTS_MODE=demo`. El archivo `../chokxen-demo.html` fuerza ambos modos de demostración para funcionar sin red.
+ESPN cubre Liga MX, Premier League, LaLiga, Champions, NFL y NBA, con consulta cada 10 segundos durante encuentros en vivo y cada minuto en otros casos. La latencia depende de la fuente. Los ejemplos ficticios se muestran aparte solamente en las experiencias demo. Tienda, apuestas, créditos, predicciones y administración siguen simuladas porque sus APIs no existen en main.
 
 ## Comprobación
 
-`npm test` ejecuta pruebas de solicitudes contra el contrato, renovación de sesión, fallos de acceso, registro parcial, logout y normalización de ESPN. `npm run build` compila la interfaz. Las respuestas reales de login/perfil/refresh deben verificarse con una cuenta que el usuario introduzca en el panel local; no se ha solicitado ni usado su contraseña por chat.
+53 pruebas frontend, 14 pruebas backend, compilación y prueba HTTP del cliente real a través del proxy. Navegador: sesión real local, favoritos, recarga, búsqueda, detalle, logout y tres demos; móvil comprobado a 390 px. Backend de prueba con modelos/rutas reales y SQLite aislado; VPN y MySQL no se probaron porque el servidor está apagado. El contrato en `contracts/openapi.json` se generó de las rutas actuales.
 
-Última comprobación de conectividad: panel local disponible, OpenAPI real HTTP 200 y perfil sin token HTTP 401 enviando Heart. Para utilizar cuentas reales deben estar activos Tailscale y el backend.
+Consulta [la guía integrada](../docs/integracion-login.md) para repetir la comprobación. Logout limpia el cliente y llama al backend; el backend no mantiene revocación persistente de JWT, por lo que no se afirma que un token copiado quede invalidado antes de caducar.
 
-## Encabezado Heart y bienvenida local
+## Goleadores y estadísticas por encuentro
 
-Cada solicitud del cliente de autenticación lleva el encabezado literal `Heart: CHOKXEN SPORT`, incluidos registro, login, perfil, refresh y logout. Las rutas protegidas siguen autenticadas por Bearer; Heart no concede roles. La integración usa el mismo cliente en móvil y escritorio. Si se configura una URL de backend en otro origen, su CORS debe admitir el origen del frontend y los encabezados `Heart`, `Authorization`, `Content-Type` y `refreshToken`. El proxy local evita solicitudes entre orígenes desde el navegador.
+Ver detalle consulta `/summary?event=ID` en la liga ESPN correspondiente. Muestra autores y minutos de goles, autogoles/penales cuando estén informados, marcador y comparación de estadísticas. En fútbol incluye posesión, tiros, córners, faltas, tarjetas y pases. Los datos faltantes se muestran como no disponibles; los encuentros de demo no generan goleadores falsos. El detalle se consulta cada 10 segundos en vivo, cada minuto antes de comenzar y una vez al terminar; pausa al ocultar la pestaña y cancela al cerrar el diálogo. No recibe los tokens del backend.
 
-El contrato no declara onboarding. Tras validar `/usuarios/me`, `withLocalOnboarding` decide si hace falta la bienvenida usando preferencias locales con `completed: true`, indexadas por el correo verificado. No utiliza estos datos para cambiar rol o plan. Guardar no envía una petición nueva; Cerrar sesión llama a logout y elimina los tokens locales aunque el servidor falle. La acción está disponible en el panel de bienvenida y en Mi cuenta.
+Validación adicional: 7 pruebas del adaptador de resúmenes, resumen real reducido de Pumas–Cruz Azul, consultas reales de ese encuentro y América–Monterrey, y revisión móvil sin desbordamiento. Se eliminó del panel el bloque ESPN Actualizado y su botón; la consulta automática sigue activa.
+
+## Histórico y Docker
+
+La vista Histórico guardado consulta la BD con filtros de liga, equipo y fechas. El catálogo verificado contiene 20 competiciones ESPN; las seis fuentes de la vista en vivo se mantienen. La importación protegida para administradores guarda resultados terminados y estadísticas, evita duplicados y admite reintentos. Dataset y antecedentes autenticados proporcionan los datos para el futuro motor predictivo. La exportación de estadísticas del propio encuentro no debe utilizarse como una variable anterior al partido. Consulta [el contrato y la guía Docker](../docs/historico-docker.md) para rutas, lotes y arranque. Se importaron 79 partidos del 12/04/2025 con estadísticas en SQLite aislado; los contenedores y MySQL no se ejecutaron aquí.
