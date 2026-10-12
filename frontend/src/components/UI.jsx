@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { asset, teamLogos } from '../media.js';
 
 const paths = {
@@ -62,31 +62,6 @@ export function TeamBadge({ name, color = '#829ac0', large = false, logoUrl }) {
   );
 }
 
-export function Ball({ className = '' }) {
-  return (
-    <svg className={`ball-art ${className}`} viewBox="0 0 220 220" aria-hidden="true">
-      <defs>
-        <radialGradient id="ball-grad" cx="38%" cy="35%" r="60%">
-          <stop offset="0%" stopColor="#f8faff"/>
-          <stop offset="100%" stopColor="#c8d4e8"/>
-        </radialGradient>
-        <filter id="ball-shadow" x="-20%" y="-20%" width="140%" height="140%">
-          <feDropShadow dx="4" dy="12" stdDeviation="10" floodColor="#1a0820" floodOpacity="0.5"/>
-        </filter>
-      </defs>
-      <circle cx="110" cy="110" r="102" fill="url(#ball-grad)" filter="url(#ball-shadow)"/>
-      <circle cx="110" cy="110" r="101" fill="none" stroke="#b0bdd0" strokeWidth="1.5"/>
-      <path d="m110 75 34 25-13 40H89l-13-40Z" fill="#17202d"/>
-      <path d="M110 75V21m34 79 51-18m-64 58 32 43m-74-43-32 43m19-83L25 82" stroke="#7c8ca3" strokeWidth="4"/>
-      <path d="m25 82 9-27 25-26m104 0 26 28 7 25m-33 101-28 23m-50 0-28-23" stroke="#cad2e1" strokeWidth="2" fill="none"/>
-    </svg>
-  );
-}
-
-export function ProductArt({ product }) {
-  return <img className={`product-art ${product.kind === 'ball' ? 'photo-cover' : ''}`} src={asset(product.image)} alt={product.name} loading="lazy" decoding="async" width="750" height="750"/>;
-}
-
 export function Empty({ title = 'No encontramos resultados', text = 'Prueba con otros filtros o una búsqueda diferente.' }) {
   return (
     <div className="empty">
@@ -99,6 +74,7 @@ export function Empty({ title = 'No encontramos resultados', text = 'Prueba con 
 
 export function Modal({ title, children, onClose, wide = false }) {
   const ref = useRef(null);
+  const titleId = useId();
   useEffect(() => {
     const previous = document.activeElement;
     const dialog = ref.current;
@@ -106,9 +82,9 @@ export function Modal({ title, children, onClose, wide = false }) {
     return () => { dialog.close(); previous?.focus?.(); };
   }, []);
   return (
-    <dialog ref={ref} className={`modal ${wide ? 'wide' : ''}`} onCancel={onClose} onClick={event => { if (event.target === ref.current) onClose(); }}>
+    <dialog ref={ref} aria-labelledby={titleId} className={`modal ${wide ? 'wide' : ''}`} onCancel={onClose} onClick={event => { if (event.target === ref.current) onClose(); }}>
       <div className="modal-head">
-        <h2>{title}</h2>
+        <h2 id={titleId}>{title}</h2>
         <button className="icon-button" onClick={onClose} aria-label="Cerrar ventana"><Icon name="close"/></button>
       </div>
       {children}
@@ -116,14 +92,3 @@ export function Modal({ title, children, onClose, wide = false }) {
   );
 }
 
-export function PremiumGate({ onProfile }) {
-  return (
-    <div className="premium-gate panel">
-      <span className="premium-icon"><Icon name="lock" size={28}/></span>
-      <span className="eyebrow gold">CHOKXEN PREMIUM</span>
-      <h2>Un paso adelante del partido.</h2>
-      <p>Accede a predicciones, simulación de apuestas y precios exclusivos en la tienda con el plan Premium.</p>
-      <button className="button primary" onClick={onProfile}>Ver mi plan <Icon name="arrow"/></button>
-    </div>
-  );
-}
