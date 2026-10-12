@@ -4,14 +4,11 @@ from jose import jwt
 from passlib.context import CryptContext
 from slowapi import Limiter
 from slowapi.util import get_remote_address
-import os
-import secrets
-from core.config import JWT_SECRET
 
 
 limiter = Limiter(key_func=get_remote_address) #Para limitar la cantidad de peticiones permitidas
 
-secretKey = JWT_SECRET or secrets.token_urlsafe(48)
+secretKey = "ciscoNetacad"                    #Cambiar por una variable de entorno
 algorithm = "HS256"
 accessTokenExpireMinutes = 60
 
@@ -29,7 +26,7 @@ def createAccessToken(data: dict, expiresDelta: Optional[timedelta] = None) -> s
         expire = datetime.utcnow() + expiresDelta
     else:
         expire = datetime.utcnow() + timedelta(minutes=15)
-    toEncode.update({"exp": expire, "token_type": "access"})
+    toEncode.update({"exp": expire})
     encodedJwt = jwt.encode(toEncode, secretKey, algorithm=algorithm)
     return encodedJwt
 
@@ -41,6 +38,6 @@ def createRefreshToken(data: dict, expiresDelta: Optional[timedelta] = None) -> 
         expire = datetime.utcnow() + expiresDelta
     else:
         expire = datetime.utcnow() + timedelta(days=refreshTokenExpireDays)
-    toEncode.update({"exp": expire, "token_type": "refresh"})
+    toEncode.update({"exp": expire})
     encodedJwt = jwt.encode(toEncode, secretKey, algorithm=algorithm)
     return encodedJwt

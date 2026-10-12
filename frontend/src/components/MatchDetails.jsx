@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react';
 import { TeamBadge } from './UI.jsx';
-import { fetchMatchSummary, normalizeMatchSummary } from '../services/match-summary.js';
+import { fetchMatchSummary } from '../services/match-summary.js';
 
 export default function MatchDetails({ match, user }) {
-  const [state, setState] = useState(() => ({ summary: match.storedSummary ? normalizeMatchSummary(match.storedSummary, match) : null, loading: match.source === 'ESPN' && match.storage !== 'BD', error: '' }));
+  const [state, setState] = useState(() => ({ summary: null, loading: match.source === 'ESPN', error: '' }));
   const [revision, setRevision] = useState(0);
   useEffect(() => {
-    if (match.source !== 'ESPN' || match.storage === 'BD') return;
+    if (match.source !== 'ESPN') return;
     let active = true, timer;
     const controller = new AbortController();
     setState({ summary: null, loading: true, error: '' });
@@ -42,8 +42,7 @@ export default function MatchDetails({ match, user }) {
         <section className="statistics-section"><h3>Estadísticas del partido</h3>{summary.statistics.length ? <><div className="stats-team-heading"><strong>{summary.teams[0]}</strong><span>vs.</span><strong>{summary.teams[1]}</strong></div><dl className="match-statistics">{summary.statistics.map(stat => <div key={stat.name}><dd>{stat.values[0]}</dd><dt>{stat.label}</dt><dd>{stat.values[1]}</dd></div>)}</dl></> : <p className="muted small">ESPN aún no tiene estadísticas disponibles para este encuentro.</p>}</section>
         {summary.venue && <p className="muted small">Estadio: {summary.venue}</p>}
       </>}
-      {match.storage === 'BD' && !summary && <p className="muted small">El marcador está guardado. Todavía no hay un resumen disponible; vuelve a importar el periodo para reintentar.</p>}
-      <p className="small muted">{match.storage === 'BD' ? 'Fuente: ESPN · Archivo guardado en la base de datos.' : 'Fuente: ESPN. La información en vivo puede llegar con retraso.'}</p>
+      <p className="small muted">Fuente: ESPN. La información en vivo puede llegar con retraso.</p>
     </div> : <>
       {match.probabilities && (user.plan === 'Premium' || user.role === 'Administrador') && <div className="summary-lines">{[match.home, 'Empate', match.away].map((label, index) => <p key={label}><span>{label}</span><strong>{match.probabilities[index]}%</strong></p>)}</div>}
       <p className="muted">Encuentro de demostración. Sus marcadores y predicciones son ficticios.</p><p className="small muted">Los goleadores y las estadísticas reales están disponibles en los encuentros identificados como ESPN.</p>

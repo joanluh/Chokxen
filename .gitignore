@@ -11,6 +11,3 @@ dist/
 .env.*
 !.env.example
 /chokxen-demo.html
-backend/.local-check/
-backend/.venv/
-.pytest_cache/

@@ -1,53 +1,18 @@
 # Chokxen Sport
 
-Plataforma deportiva con frontend React, perfiles de demostración y consulta de resultados ESPN.
+Se restaura el backend y la infraestructura de la versión `dffff4f3ec910427f2299e4f2b7b78b9cb4c5b63` (anterior a la integración de histórico). El Compose raíz vuelve a contener únicamente los servicios originales de MySQL y FastAPI. El frontend tiene su propio Compose independiente.
 
-## Estructura
-
-```text
-backend/     API FastAPI, autenticación, catálogos y database/
-frontend/    Aplicación React, estilos, recursos, contrato API y pruebas
-docs/        Documentación del proyecto
-```
-
-## Ejecutar el frontend
-
-Requiere Node.js 22.12 o superior.
+## Levantar solo la SPA
 
 ```sh
 cd frontend
-npm ci --ignore-scripts
-npm run dev
-```
-
-Abre la dirección local que muestre Vite. Los botones **Básico**, **Premium** y **Administrador** permiten explorar la demo sin servidor. El formulario de login/registro usa el backend configurado en `frontend/.env.example` (localhost por defecto; Tailscale si se configura la IP VPN).
-
-Inicio y Resultados separan los datos reales de ESPN de los encuentros ficticios de los perfiles demo. Créditos, apuestas, tienda, pedidos, administración y predicciones son simulaciones. El onboarding utiliza las rutas reales de catálogos y favoritos. La marca de bienvenida completada sin favoritos se conserva localmente.
-
-```sh
-npm test
-npm run build
-```
-
-Consulta [la guía de frontend](docs/frontend.md), [su README](frontend/README.md) y [la conexión API](frontend/API.md).
-
-El repositorio contiene el código fuente y sus recursos. Dependencias instaladas, compilaciones, configuraciones locales y paquetes ZIP no forman parte de esta integración.
-
-## Comprobación local integrada
-
-Consulta [la guía de login e integración](docs/integracion-login.md) para probar el backend real con una base aislada sin VPN. Login, sesión, favoritos, búsqueda y detalles están conectados. Tienda, apuestas y administración conservan sus simulaciones porque aún faltan sus APIs.
-
-## Histórico y ejecución con Docker
-
-Resultados incluye un archivo filtrable por liga, equipo y fechas. Guarda resultados y estadísticas ESPN en MySQL, con importación idempotente y consulta de antecedentes para el futuro motor predictivo. El catálogo histórico incluye 20 competiciones verificadas. Los goleadores se muestran en un formato compacto.
-
-Para una instalación nueva:
-
-```sh
-python scripts/prepare_docker.py
-docker compose config --quiet
 docker compose up -d --build
-docker compose exec backend python scripts/import_history.py --leagues all --start 2025-04-12 --end 2025-04-12
 ```
 
-Abre http://localhost:5173. Conserva las credenciales si ya tienes un volumen MySQL; no ejecutes el generador de una instalación nueva para sustituirlas. Consulta [la guía de histórico y Docker](docs/historico-docker.md) para administración, importación por rangos y el contrato de datos. Se aprobaron 53 pruebas frontend y 14 backend, y se importaron 79 partidos históricos reales a SQLite aislado. La ejecución de contenedores/MySQL queda pendiente en un equipo con Docker.
+Abre http://localhost:5173. No necesita un backend encendido para mostrar la interfaz y probar Básico, Premium y Administrador. Para cuentas reales configura `BACKEND_URL` del contenedor existente de Daniel en `frontend/.env`. No necesitas instalar Node ni iniciar Vite en la computadora.
+
+Consulta [frontend/README.md](frontend/README.md) para Docker, configuración de VPN y diagnóstico, y [frontend/API.md](frontend/API.md) para el contrato.
+
+El backend conserva su Dockerfile, dependencias, rutas y Compose originales sin modificaciones. La SPA mantiene diseño móvil, login/registro, perfil, onboarding con favoritos existentes y consulta ESPN. Se retira la dependencia de las nuevas rutas de histórico; tienda, apuestas y predicciones siguen como demostración.
+
+Validación: 50 pruebas del frontend y compilación aprobadas. La ejecución de los contenedores requiere verificar Docker en el equipo de despliegue; actualizar el repositorio no modifica el servidor remoto ni su base de datos.
